@@ -122,11 +122,25 @@ elif aba == "Painel do Mestre (Admin)":
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             
-            # KPIs
+            # --- TRATAMENTO DE SEGURANÇA ---
+            # Força as colunas a serem numéricas. O que não for número vira 0.
+            df_vendas['Litragem_Total'] = pd.to_numeric(df_vendas['Litragem_Total'], errors='coerce').fillna(0)
+            df_clientes['Pontos_Totais'] = pd.to_numeric(df_clientes['Pontos_Totais'], errors='coerce').fillna(0)
+
+            # --- 1. MÉTRICAS RÁPIDAS (KPIs) ---
+            st.subheader("📊 Resumo de Operação")
             c1, c2, c3 = st.columns(3)
-            c1.metric("Total Litros", f"{df_vendas['Litragem_Total'].sum()} L")
-            c2.metric("Clientes", len(df_clientes))
-            c3.metric("Média/Cli", f"{(df_vendas['Litragem_Total'].sum()/len(df_clientes)):.1f} L" if len(df_clientes)>0 else 0)
+            
+            total_litros = df_vendas['Litragem_Total'].sum()
+            num_clientes = len(df_clientes)
+            
+            with c1:
+                st.metric("Total Litros", f"{total_litros:,.0f} L".replace(",", "."))
+            with c2:
+                st.metric("Clientes", num_clientes)
+            with c3:
+                media = total_litros / num_clientes if num_clientes > 0 else 0
+                st.metric("Média/Cli", f"{media:.1f} L")
 
             # Ranking
             st.subheader("🏆 Top 5 Maiores Consumidores")
