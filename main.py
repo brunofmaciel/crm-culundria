@@ -117,6 +117,15 @@ if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
+    # --- LINK DE CADASTRO PARA NOVOS CLIENTES ---
+    st.write("") # Espacinho
+    col_link, _ = st.columns([2, 1])
+    with col_link:
+        if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
+            st.session_state.aba_atual = "Quero ser Alquimista (Cadastro)"
+            st.rerun() # Reinicia para abrir na aba de cadastro
+    st.write("---")
+
     if cpf_input:
         try:
             # 1. Busca os dados
