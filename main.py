@@ -73,17 +73,22 @@ if cpf_input:
             # Abre a aba de Vendas
             sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
             df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
+
+            # --- O CONSERTO PARA O "0" ESTÁ AQUI ---
+            # Esta linha substitui qualquer 0 ou valor vazio por um texto limpo
+            df_vendas = df_vendas.replace(0, "")
+            df_vendas = df_vendas.fillna("")
             
             # Filtra as vendas pelo CPF do cliente logado
             minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
             
             if not minhas_vendas.empty:
                 # Seleciona apenas as colunas importantes para mostrar ao cliente
-                exibir_vendas = minhas_vendas[['ID_Pedido','Data_Venda', 'Litragem_Total']]
+                exibir_vendas = minhas_vendas[['ID_Pedido','Data_Venda', 'Litragem_Total', "Total Pontos"]]
                 st.table(exibir_vendas) # Mostra uma tabela limpa
             else:
                 st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
-        except Exception as e:
-            st.error(f"Erro técnico no histórico: {e}")
+        except:
+            st.warning("Não foi possível carregar o histórico agora.")
     else:
         st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
