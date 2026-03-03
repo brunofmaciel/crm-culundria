@@ -107,6 +107,7 @@ if aba == "Portal do Cliente":
 
     if cpf_input:
         try:
+            # 1. Busca os dados
             sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
             df = pd.DataFrame(sheet.get_all_records())
             df['ID_Cliente'] = df['ID_Cliente'].astype(str)
@@ -114,37 +115,45 @@ if aba == "Portal do Cliente":
 
             if not cliente.empty:
                 c = cliente.iloc[0]
-                
-                # Cabeçalho de Boas-vindas
-                st.markdown(f"## Bem-vindo, Alquimista {c['Nome_Completo'].split()[0]}!")
+                st.balloons()
+
+                # --- 2. CÁLCULO DO PROGRESSO (PRECISA VIR AQUI!) ---
+                try:
+                    # Converte o valor da planilha para número
+                    val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
+                    # Se na planilha estiver 80, transformamos em 0.8 para o Streamlit entender
+                    if val_bruto > 1.0: 
+                        val_bruto = val_bruto / 100.0
+                    progresso = min(max(val_bruto, 0.0), 1.0)
+                except:
+                    progresso = 0.0 # Valor padrão caso a célula esteja vazia ou com erro
+
+                # --- 3. LAYOUT PREMIUM (ESTILO DOGMA + CULUNDRIA) ---
+                st.markdown(f"## BEM-VINDO, ALQUIMISTA {c['Nome_Completo'].split()[0].upper()}!")
                 st.write("---")
 
-                # Container de Status (Cards Lado a Lado)
+                # Cards de Status
                 col_status, col_pontos = st.columns([2, 1])
                 
                 with col_status:
-                    # Card de Nível
+                    # Card de Nível usando o Azul Marinho e Âmbar do logo
                     st.markdown(f"""
                         <div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border-left: 5px solid #e68a00;'>
-                            <h4 style='margin:0;'>NÍVEL: {c['Nível_Atual']}</h4>
-                            <p style='color: #aaa; font-size: 0.9em;'>Mantenha suas brassagens em dia!</p>
+                            <h4 style='margin:0; color: white;'>NÍVEL: {c['Nível_Atual']}</h4>
+                            <p style='color: #aaa; font-size: 0.9em; margin:0;'>Sua jornada artesanal continua!</p>
                         </div>
                     """, unsafe_allow_html=True)
                     st.write("")
+                    # Aqui a variável 'progresso' já existe, então não dá mais erro!
                     st.progress(progresso)
-                    st.caption(f"Você está a {int((1-progresso)*100)}% de evoluir na sua alquimia.")
+                    st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho para o próximo nível.")
 
                 with col_pontos:
-                    # Card de Pontos (Estilo Métrica)
+                    # Métrica de Pontos com destaque Âmbar
                     st.metric("ESSÊNCIA ACUMULADA", f"{c['Pontos_Totais']} PTS")
 
-                # Histórico com Tabela Estilizada
+                # --- 4. HISTÓRICO DE VENDAS ---
                 st.markdown("### 📜 GRIMÓRIO DE PEDIDOS")
-                # [Aqui segue o seu código de st.table atual...]
-
-                # Histórico de Vendas
-                st.markdown("---")
-                st.write("### 📜 Seu Histórico de Alquimia")
                 try:
                     sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
                     df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
@@ -152,30 +161,30 @@ if aba == "Portal do Cliente":
                     minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
                     
                     if not minhas_vendas.empty:
-                        colunas_exibir = ['ID_Pedido', 'Data_Venda', 'Litragem_Total', 'Total Pontos']
-                        st.table(minhas_vendas[colunas_exibir])
+                        colunas_venda = ['ID_Pedido', 'Data_Venda', 'Litragem_Total', 'Total Pontos']
+                        st.table(minhas_vendas[colunas_venda])
                     else:
-                        st.info("Nenhum registro encontrado.")
+                        st.info("Ainda não constam barris registrados. Que tal o primeiro?")
                 except:
-                    st.warning("Erro ao carregar histórico.")
+                    st.warning("Não foi possível carregar seu histórico agora.")
 
-                # Formulário de Indicação
+                # --- 5. FORMULÁRIO DE INDICAÇÃO ---
                 st.markdown("---")
-                st.write("### 🚀 Indique um Amigo")
+                st.write("### 🚀 INDIQUE UM AMIGO")
                 with st.form("form_indicacao", clear_on_submit=True):
                     nome_amigo = st.text_input("Nome do Amigo")
-                    tel_amigo = st.text_input("WhatsApp")
-                    if st.form_submit_button("Enviar"):
+                    tel_amigo = st.text_input("WhatsApp (com DDD)")
+                    if st.form_submit_button("ENVIAR INDICAÇÃO"):
                         if nome_amigo and tel_amigo:
                             client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").append_row([cpf_input, nome_amigo, tel_amigo, "Pendente"])
-                            st.success("Indicação enviada!")
+                            st.success("Indicação enviada com sucesso!")
                         else:
-                            st.error("Preencha os campos.")
-            else:
-                st.warning("CPF não cadastrado.")
-        except Exception as e:
-            st.error(f"Erro: {e}")
+                            st.error("Por favor, preencha o nome e o telefone.")
 
+            else:
+                st.warning("CPF não encontrado na nossa base de alquimistas.")
+        except Exception as e:
+            st.error(f"Erro ao acessar dados: {e}")
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
