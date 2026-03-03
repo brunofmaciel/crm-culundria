@@ -184,6 +184,42 @@ if aba == "Portal do Cliente":
                 st.warning("CPF não encontrado na nossa base de alquimistas.")
         except Exception as e:
             st.error(f"Erro ao acessar dados: {e}")
+
+# ==========================================
+# NOVO: ABA DE CADASTRO
+# ==========================================
+elif aba == "Quero ser Alquimista (Cadastro)":
+    st.title("🧪 Inicie sua Jornada Alquímica")
+    st.write("Preencha os dados abaixo para começar a acumular pontos na Culundria!")
+
+    with st.form("form_cadastro", clear_on_submit=True):
+        nome = st.text_input("Nome Completo")
+        cpf_novo = st.text_input("Seu CPF (apenas números)")
+        whatsapp = st.text_input("WhatsApp (com DDD)")
+        
+        submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
+
+        if submit_cad:
+            if nome and cpf_novo and whatsapp:
+                try:
+                    sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    df_check = pd.DataFrame(sheet_cli.get_all_records())
+                    
+                    # Verifica se o CPF já existe
+                    if str(cpf_novo) in df_check['ID_Cliente'].astype(str).values:
+                        st.warning("Este CPF já está em nossa base de alquimistas! Vá ao Portal do Cliente para entrar.")
+                    else:
+                        # Dados iniciais para o novo cliente
+                        # Ordem sugerida: ID_Cliente, Nome_Completo, Nível_Atual, Pontos_Totais, Progresso_Copo, WhatsApp
+                        nova_linha = [cpf_novo, nome, "Alquimista Aprendiz", 0, 0, whatsapp]
+                        sheet_cli.append_row(nova_linha)
+                        
+                        st.success(f"Bem-vindo, {nome}! Sua conta foi criada. Agora é só pedir seu barril e acumular pontos!")
+                        st.balloons() # Aqui os balões valem a pena!
+                except Exception as e:
+                    st.error(f"Erro ao salvar cadastro: {e}")
+            else:
+                st.error("Por favor, preencha todos os campos para se tornar um Alquimista.")
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
