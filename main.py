@@ -80,18 +80,18 @@ if aba == "Portal do Cliente":
                 st.header(f"Olá, {c['Nome_Completo']}!")
 
                 with st.container():
-    st.title("🍺 Portal do Alquimista")
-    st.write("---")
+                     st.title("🍺 Portal do Alquimista")
+                     st.write("---")
     
-    col1, col2 = st.columns([2, 1])
+                     col1, col2 = st.columns([2, 1])
     
-    with col1:
+                with col1:
         # Informações principais do cliente
         st.subheader("Seu Progresso")
         st.progress(progresso)
         st.caption(f"Faltam {int((1-progresso)*100)}% para sua próxima recompensa.")
         
-    with col2:
+                with col2:
         # Destaque de nível ou pontos
         st.metric("Pontos Atuais", f"{c['Pontos_Totais']} pts")
         
