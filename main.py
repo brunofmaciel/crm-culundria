@@ -62,6 +62,9 @@ with st.sidebar:
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
 # ==========================================
+# ==========================================
+# ABA 1: PORTAL DO CLIENTE
+# ==========================================
 if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
     
@@ -69,6 +72,7 @@ if aba == "Portal do Cliente":
 
     if cpf_input:
         try:
+            # 1. Busca os dados do cliente
             sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
             df = pd.DataFrame(sheet.get_all_records())
             df['ID_Cliente'] = df['ID_Cliente'].astype(str)
@@ -77,58 +81,58 @@ if aba == "Portal do Cliente":
             if not cliente.empty:
                 c = cliente.iloc[0]
                 st.balloons()
-                st.header(f"Olá, {c['Nome_Completo']}!")
 
-                with st.container():
-                     st.title("🍺 Portal do Alquimista")
-                     st.write("---")
-    
-                     col1, col2 = st.columns([2, 1])
-    
-                with col1:
-        # Informações principais do cliente
-        st.subheader("Seu Progresso")
-        st.progress(progresso)
-        st.caption(f"Faltam {int((1-progresso)*100)}% para sua próxima recompensa.")
-        
-                with col2:
-        # Destaque de nível ou pontos
-        st.metric("Pontos Atuais", f"{c['Pontos_Totais']} pts")
-        
-                # Nível e Progresso
-                st.subheader(f"Nível Atual: {c['Nível_Atual']}")
-                
+                # 2. Cálculo do Progresso (PRECISA vir antes de mostrar na tela)
                 try:
                     val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
-                    if val_bruto > 1.0: val_bruto = val_bruto / 100.0
+                    # Ajuste para percentual (se for 80 vira 0.8)
+                    if val_bruto > 1.0: 
+                        val_bruto = val_bruto / 100.0
                     progresso = min(max(val_bruto, 0.0), 1.0)
                 except:
                     progresso = 0.0
 
-                st.write("### Seu progresso para o próximo nível:")
-                st.progress(progresso)
-                st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho!")
-                st.metric("Saldo de Pontos", f"{c['Pontos_Totais']} pts")
+                # 3. Layout Organizado em Container e Colunas
+                with st.container():
+                    st.header(f"Olá, {c['Nome_Completo']}!")
+                    st.write("---")
+                    
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        # Informações principais do progresso
+                        st.subheader(f"Nível: {c['Nível_Atual']}")
+                        st.progress(progresso)
+                        st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho para o próximo nível!")
+                        
+                    with col2:
+                        # Destaque de pontos
+                        st.metric("Pontos Atuais", f"{c['Pontos_Totais']} pts")
 
-                # --- HISTÓRICO DE VENDAS ---
+                # 4. Histórico de Vendas (Fora do container principal)
                 st.markdown("---")
                 st.write("### 📜 Seu Histórico de Alquimia")
                 try:
                     sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
                     df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
+                    # Limpa zeros e valores vazios para a tabela ficar bonita
                     df_vendas = df_vendas.replace(0, "").fillna("")
                     
                     minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
                     
                     if not minhas_vendas.empty:
-                        # Ajuste as colunas abaixo conforme sua planilha real
-                        colunas_venda = ['ID_Pedido','Data_Venda', 'Litragem_Total', 'Total Pontos']
-                        st.table(minhas_vendas[colunas_venda])
+                        colunas_exibir = ['ID_Pedido', 'Data_Venda', 'Litragem_Total', 'Total Pontos']
+                        st.table(minhas_vendas[colunas_exibir])
                     else:
-                        st.info("Ainda não constam barris registrados.")
+                        st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
                 except Exception as e:
                     st.warning(f"Não foi possível carregar o histórico: {e}")
 
+            else:
+                st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
+        
+        except Exception as e:
+            st.error(f"Erro ao acessar a base de dados: {e}")
                 # --- FORMULÁRIO DE INDICAÇÃO ---
                 st.markdown("---")
                 st.write("### 🚀 Indique um Amigo e Ganhe Pontos!")
