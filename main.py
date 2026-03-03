@@ -34,8 +34,7 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
-# --- NÍVEIS DOS USUÁRIOS ---
-
+# --- FUNÇÃO DE NÍVEIS DA CONFRARIA ---
 def calcular_status_confraria(pontos):
     if pontos <= 100:
         return {
@@ -66,14 +65,12 @@ def calcular_status_confraria(pontos):
             "proximo": "Obrigado por fazer parte da nossa essência! 🍻"
         }
 
-# --- 3. LÓGICA DE NAVEGAÇÃO (ESTRUTURA LIMPA) ---
+# --- 3. LÓGICA DE NAVEGAÇÃO (ESTRUTURA BLINDADA) ---
 opcoes_menu = ["Meu Painel (Login)", "Fazer Parte da Confraria", "Área do Mestre"]
 
-# Se for a primeira vez, começamos no Portal
-if "aba_selecionada" not in st.session_state:
-    st.session_state.aba_selecionada = "Portal do Cliente"
+if "aba_selecionada" not in st.session_state or st.session_state.aba_selecionada not in opcoes_menu:
+    st.session_state.aba_selecionada = "Meu Painel (Login)"
 
-# Descobrimos qual o número (0, 1 ou 2) da aba atual para o rádio saber onde marcar
 indice_atual = opcoes_menu.index(st.session_state.aba_selecionada)
 
 with st.sidebar:
@@ -86,140 +83,113 @@ with st.sidebar:
     st.write("📍 Cruzília, MG")
     st.markdown("---")
     
-    # IMPORTANTE: O rádio NÃO tem 'key' aqui, ele é controlado pelo 'index'
-    aba = st.sidebar.radio(
-        "Ir para:", 
-        opcoes_menu, 
-        index=indice_atual
-    )
-    # Atualizamos a memória com o que o usuário clicou no menu
+    aba = st.sidebar.radio("Ir para:", opcoes_menu, index=indice_atual)
     st.session_state.aba_selecionada = aba
 
 # ==========================================
-# ABA 1: PORTAL DO CLIENTE
+# ABA 1: PORTAL DO CLIENTE (LOGIN)
 # ==========================================
-if aba == "Meu painel":
+if aba == "Meu Painel (Login)":
     st.title("🍺 Culundria Confraria")
-    cpf_input = st.text_input("Digite seu CPF (apenas números):")
+    
+    col_l1, col_l2 = st.columns(2)
+    with col_l1:
+        cpf_input = st.text_input("CPF (apenas números):")
+    with col_l2:
+        senha_input = st.text_input("Senha:", type="password")
 
-    # --- O BOTÃO DE "PULO" ---
-    st.write("") 
-    if st.button("✨ Acompanhe sua saga. Cadastre-se aqui."):
-        # Aqui mudamos a variável e damos o rerun. O rádio vai ler o novo índice sozinho!
-        st.session_state.aba_selecionada = "Quero participar da Confraria (Cadastro)"
+    if st.button("ENTRAR NO PAINEL"):
+        if cpf_input and senha_input:
+            try:
+                sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                df = pd.DataFrame(sheet.get_all_records())
+                df['ID_Cliente'] = df['ID_Cliente'].astype(str)
+                cliente = df[df['ID_Cliente'] == cpf_input.strip()]
+
+                if not cliente.empty:
+                    c = cliente.iloc[0]
+                    # Validação de Senha (Coluna I)
+                    if str(senha_input).strip() == str(c['Senha']).strip():
+                        resumo = calcular_status_confraria(c['Total Pontos'] if 'Total Pontos' in c else c['Pontos_Totais'])
+                        
+                        st.markdown(f"## BEM-VINDO, CONFRADE {c['Nome_Completo'].split()[0].upper()}! 🍻")
+                        
+                        # Card de Status Dinâmico
+                        st.markdown(f"""
+                            <div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid {resumo['cor']};'>
+                                <h2 style='margin:0; color: {resumo['cor']}; font-size: 1.2em;'>STATUS: {resumo['nivel'].upper()}</h2>
+                                <p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>"{resumo['desc']}"</p>
+                                <hr style='border: 0.1px solid #333;'>
+                                <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['proximo']}</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.write("")
+                        st.metric("GOLES DE VANTAGEM", f"{c['Pontos_Totais']} PTS")
+                        
+                        # Histórico de Pedidos
+                        st.markdown("### 📜 MEU HISTÓRICO")
+                        try:
+                            sheet_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
+                            df_v = pd.DataFrame(sheet_v.get_all_records())
+                            minhas_v = df_v[df_v['ID_Cliente'].astype(str) == cpf_input.strip()]
+                            if not minhas_v.empty:
+                                st.table(minhas_v[['Data_Venda', 'Litragem_Total', 'Total Pontos']])
+                        except:
+                            st.info("Ainda não constam barris registrados.")
+                    else:
+                        st.error("Senha incorreta!")
+                else:
+                    st.warning("CPF não encontrado.")
+            except Exception as e:
+                st.error(f"Erro: {e}")
+        else:
+            st.error("Preencha CPF e Senha.")
+
+    st.markdown("---")
+    if st.button("✨ Ainda não faz parte? Cadastre-se aqui"):
+        st.session_state.aba_selecionada = "Fazer Parte da Confraria"
         st.rerun()
 
-    # ... Resto do seu código do CPF (if cpf_input:) ...
-
-    if cpf_input:
-        try:
-            sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-            df = pd.DataFrame(sheet.get_all_records())
-            df['ID_Cliente'] = df['ID_Cliente'].astype(str)
-            cliente = df[df['ID_Cliente'] == cpf_input.strip()]
-
-            if not cliente.empty:
-                c = cliente.iloc[0]
-                
-                try:
-                    val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
-                    if val_bruto > 1.0: val_bruto = val_bruto / 100.0
-                    progresso = min(max(val_bruto, 0.0), 1.0)
-                except:
-                    progresso = 0.0
-
-                st.markdown(f"## BEM-VINDO, CONFRADE {c['Nome_Completo'].split()[0].upper()}!")
-                st.write("---")
-
-                col_status, col_pontos = st.columns([2, 1])
-                with col_status:
-                    st.markdown(f"""
-                        <div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border-left: 5px solid #e68a00;'>
-                            <h4 style='margin:0; color: white;'>NÍVEL: {c['Nível_Atual']}</h4>
-                            <p style='color: #aaa; font-size: 0.9em; margin:0;'>Sua jornada artesanal continua!</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.write("")
-                    st.progress(progresso)
-                    st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho.")
-
-                with col_pontos:
-                    st.metric("GOLES DE VANTAGEM", f"{c['Pontos_Totais']} PTS")
-
-                st.markdown("### 📜 HISTÓRICO DE PEDIDOS")
-                try:
-                    sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
-                    df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
-                    df_vendas.columns = df_vendas.columns.str.strip()
-                    minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
-                    
-                    if not minhas_vendas.empty:
-                        colunas_venda = ['ID_Pedido', 'Data_Venda', 'Litragem_Total', 'Total Pontos']
-                        st.table(minhas_vendas[colunas_venda])
-                    else:
-                        st.info("Ainda não constam barris registrados.")
-                except:
-                    st.warning("Erro ao carregar histórico.")
-
-                st.markdown("---")
-                st.write("### 🚀 INDIQUE UM CONFRADE")
-                with st.form("form_indicacao", clear_on_submit=True):
-                    n_amigo = st.text_input("Nome do Amigo")
-                    t_amigo = st.text_input("WhatsApp (com DDD)")
-                    if st.form_submit_button("ENVIAR INDICAÇÃO"):
-                        if n_amigo and t_amigo:
-                            client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").append_row([cpf_input, n_amigo, t_amigo, "Pendente"])
-                            st.success("Indicação enviada!")
-            else:
-                st.warning("CPF não encontrado.")
-        except Exception as e:
-            st.error(f"Erro ao acessar dados: {e}")
-
 # ==========================================
-# ABA 2: CADASTRO DE NOVOS ALQUIMISTAS
+# ABA 2: CADASTRO
 # ==========================================
-elif aba == "Quero ser um CONFRADE(Cadastro)":
-    st.title("🧪 Entre para a Culundria Confraria")
-    st.write("Preencha os dados abaixo para criar sua conta e proteger seus pontos!")
+elif aba == "Fazer Parte da Confraria":
+    st.title("🧪 Entre para a Confraria")
+    st.write("Proteja seus pontos e comece sua jornada!")
 
     with st.form("form_cadastro", clear_on_submit=True):
         nome = st.text_input("Nome Completo")
-        cpf_novo = st.text_input("Seu CPF (apenas números)")
+        cpf_novo = st.text_input("CPF (apenas números)")
         whatsapp = st.text_input("WhatsApp (com DDD)")
         email = st.text_input("E-mail")
-        senha_nova = st.text_input("Crie uma Senha", type="password", help="Escolha uma senha para proteger seus resgates.")
+        senha_n = st.text_input("Crie uma Senha", type="password")
         
-        submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
-
-        if submit_cad:
-            if nome and cpf_novo and whatsapp and email and senha_nova:
+        if st.form_submit_button("CRIAR MINHA CONTA"):
+            if nome and cpf_novo and whatsapp and email and senha_n:
                 try:
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
-                    
                     if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
-                        st.warning("Este CPF já está cadastrado! Vá ao Portal do Cliente.")
+                        st.warning("CPF já cadastrado!")
                     else:
-                        data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
-                        
-                        # ORDEM DAS COLUNAS NA PLANILHA (A até I):
-                        # A=CPF, B=Nome, C=WhatsApp, D=Email, E=Nível, F=Pontos, G=Progresso, H=Data, I=Senha
-                        nova_linha = [
-                            str(cpf_novo).strip(), 
-                            nome.strip().upper(), 
-                            whatsapp.strip(), 
-                            email.strip().lower(), 
-                            "Explorador", 
-                            0, 
-                            0, 
-                            data_hoje,
-                            senha_nova.strip() # <--- A senha entra aqui!
-                        ]
-                        
+                        data_h = pd.Timestamp.now().strftime("%d/%m/%Y")
+                        # A=CPF, B=Nome, C=WhatsApp, D=Email, E=Status, F=Pontos, G=Progresso, H=Data, I=Senha
+                        nova_linha = [str(cpf_novo).strip(), nome.strip().upper(), whatsapp.strip(), email.strip().lower(), "Explorador", 0, 0, data_h, senha_n.strip()]
                         sheet_cli.append_row(nova_linha)
-                        st.success(f"Bem-vindo, {nome.split()[0]}! Sua conta foi criada com segurança.")
+                        st.success("Bem-vindo à Confraria! Use seu CPF e senha no painel.")
                         st.balloons()
                 except Exception as e:
-                    st.error(f"Erro ao salvar cadastro: {e}")
+                    st.error(f"Erro ao salvar: {e}")
             else:
-                st.error("Por favor, preencha todos os campos, incluindo a senha.")
+                st.error("Preencha todos os campos.")
+
+# ==========================================
+# ABA 3: ÁREA DO MESTRE (ADMIN)
+# ==========================================
+elif aba == "Área do Mestre":
+    st.title("🏰 Área do Mestre")
+    senha_adm = st.sidebar.text_input("Senha Admin:", type="password")
+    if senha_adm == st.secrets["admin_password"]:
+        st.success("Grimório de dados aberto!")
+        # ... (Mantém sua lógica de gráficos aqui) ...
