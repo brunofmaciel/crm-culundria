@@ -6,12 +6,69 @@ import pandas as pd
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺", layout="centered")
 
-# --- ESTILO LIMPO ---
+# --- ESTILO PREMIUM CULUNDRIA (Inspirado em Dogma) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-    .stButton>button { border-radius: 4px; background-color: #262730; color: white; border: None; }
+    /* Importando fonte moderna */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    
+    /* Fundo Escuro Profundo (Navy do Logo) */
+    [data-testid="stAppViewContainer"] {
+        background-color: #0b0e27;
+        color: #ffffff;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    /* Barra Lateral */
+    [data-testid="stSidebar"] {
+        background-color: #050714;
+    }
+
+    /* Cards de Informação (Inspirado nos boxes da Dogma) */
+    .stMetric, .metric-card {
+        background-color: #161b3d;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 1px solid #e68a00; /* Borda Âmbar */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Customização dos Títulos */
+    h1, h2, h3, h4 {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Botões Alquimistas (Cor Âmbar do Logo) */
+    .stButton>button {
+        width: 100%;
+        border-radius: 5px;
+        background-color: #e68a00;
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 0.6rem;
+        text-transform: uppercase;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #ff9f00;
+        box-shadow: 0 0 15px #e68a00;
+    }
+
+    /* Barra de Progresso Estilo Cerveja */
+    .stProgress > div > div > div > div {
+        background-image: linear-gradient(to right, #e68a00, #ffcc33);
+    }
+    
+    /* Tabelas Limpas */
+    .stTable {
+        background-color: #161b3d;
+        border-radius: 10px;
+        color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -57,27 +114,33 @@ if aba == "Portal do Cliente":
 
             if not cliente.empty:
                 c = cliente.iloc[0]
-                st.balloons()
+                
+                # Cabeçalho de Boas-vindas
+                st.markdown(f"## Bem-vindo, Alquimista {c['Nome_Completo'].split()[0]}!")
+                st.write("---")
 
-                # Cálculo do Progresso
-                try:
-                    val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
-                    if val_bruto > 1.0: val_bruto = val_bruto / 100.0
-                    progresso = min(max(val_bruto, 0.0), 1.0)
-                except:
-                    progresso = 0.0
+                # Container de Status (Cards Lado a Lado)
+                col_status, col_pontos = st.columns([2, 1])
+                
+                with col_status:
+                    # Card de Nível
+                    st.markdown(f"""
+                        <div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border-left: 5px solid #e68a00;'>
+                            <h4 style='margin:0;'>NÍVEL: {c['Nível_Atual']}</h4>
+                            <p style='color: #aaa; font-size: 0.9em;'>Mantenha suas brassagens em dia!</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.write("")
+                    st.progress(progresso)
+                    st.caption(f"Você está a {int((1-progresso)*100)}% de evoluir na sua alquimia.")
 
-                # Layout Principal
-                with st.container():
-                    st.header(f"Olá, {c['Nome_Completo']}!")
-                    st.write("---")
-                    col1, col2 = st.columns([2, 1])
-                    with col1:
-                        st.subheader(f"Nível: {c['Nível_Atual']}")
-                        st.progress(progresso)
-                        st.caption(f"Você completou **{int(progresso * 100)}%** do caminho!")
-                    with col2:
-                        st.metric("Pontos Atuais", f"{c['Pontos_Totais']} pts")
+                with col_pontos:
+                    # Card de Pontos (Estilo Métrica)
+                    st.metric("ESSÊNCIA ACUMULADA", f"{c['Pontos_Totais']} PTS")
+
+                # Histórico com Tabela Estilizada
+                st.markdown("### 📜 GRIMÓRIO DE PEDIDOS")
+                # [Aqui segue o seu código de st.table atual...]
 
                 # Histórico de Vendas
                 st.markdown("---")
