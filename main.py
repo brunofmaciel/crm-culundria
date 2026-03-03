@@ -87,6 +87,17 @@ except Exception as e:
 NOME_PLANILHA = "crm-culundria" 
 
 # 3. BARRA LATERAL
+# --- LOGICA DE NAVEGAÇÃO ---
+opcoes_menu = ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"]
+
+# Inicializa o estado da aba se não existir
+if 'aba_atual' not in st.session_state:
+    st.session_state.aba_atual = "Portal do Cliente"
+
+# Define qual o número da opção atual (0, 1 ou 2)
+indice_atual = opcoes_menu.index(st.session_state.aba_atual)
+
+# 3. BARRA LATERAL (LOGO E NAVEGAÇÃO)
 with st.sidebar:
     try:
         st.image("logoculundria.png", use_container_width=True)
@@ -96,20 +107,12 @@ with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
     st.write("📍 Cruzília, MG")
     st.markdown("---")
-    # Usamos o session_state para que o botão possa mudar a aba
-if 'aba_atual' not in st.session_state:
-    st.session_state.aba_atual = "Portal do Cliente"
-
-aba = st.sidebar.radio(
-    "Ir para:", 
-    ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"],
-    index=["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"].index(st.session_state.aba_atual),
-    key="aba_radio"
-)
-
-# Sincroniza a aba escolhida no rádio com o estado do sistema
-st.session_state.aba_atual = aba
-
+    
+    # O rádio agora é controlado pelo 'indice_atual'
+    aba = st.sidebar.radio("Ir para:", opcoes_menu, index=indice_atual, key="menu_radio")
+    
+    # Se o usuário clicar manualmente no rádio, atualizamos o estado
+    st.session_state.aba_atual = aba
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
 # ==========================================
@@ -119,12 +122,9 @@ if aba == "Portal do Cliente":
 
     # --- LINK DE CADASTRO PARA NOVOS CLIENTES ---
     st.write("") # Espacinho
-    col_link, _ = st.columns([2, 1])
-    with col_link:
-        if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
-            st.session_state.aba_atual = "Quero ser Alquimista (Cadastro)"
-            st.rerun() # Reinicia para abrir na aba de cadastro
-    st.write("---")
+    if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
+        st.session_state.aba_atual = "Quero ser Alquimista (Cadastro)"
+        st.rerun() # Isso força o App a ler o novo índice do menu lateral
 
     if cpf_input:
         try:
