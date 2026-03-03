@@ -110,7 +110,7 @@ if aba == "Portal do Cliente":
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
-try:
+        try:
             # 1. Carrega os dados
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
