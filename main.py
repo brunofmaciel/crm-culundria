@@ -125,10 +125,10 @@ if aba == "Meu Painel (Login)":
         c = st.session_state.dados_usuario
         pontos = float(c.get('Pontos_Totais', 0))
         resumo = calcular_status_confraria(pontos)
-        
+      
         st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
         
-        # Card de Status Premium
+        # 2. Definimos o texto do card (ASPAS TRIPLAS LIMPAS)
         html_card = f"""
             <div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid {resumo['cor']};'>
                 <h2 style='margin:0; color: {resumo['cor']}; font-size: 1.2em;'>STATUS: {resumo['nivel'].upper()}</h2>
@@ -136,7 +136,8 @@ if aba == "Meu Painel (Login)":
                 <hr style='border: 0.1px solid #333;'>
                 <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['msg']}</p>
             </div>
-        """
+        ""
+        
         st.markdown(html_card, unsafe_allow_html=True)
 
         # BARRA DE PROGRESSO (RESTAURADA)
