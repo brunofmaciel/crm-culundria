@@ -96,7 +96,19 @@ with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
     st.write("📍 Cruzília, MG")
     st.markdown("---")
-    aba = st.sidebar.radio("Ir para:", ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"])
+    # Usamos o session_state para que o botão possa mudar a aba
+if 'aba_atual' not in st.session_state:
+    st.session_state.aba_atual = "Portal do Cliente"
+
+aba = st.sidebar.radio(
+    "Ir para:", 
+    ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"],
+    index=["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"].index(st.session_state.aba_atual),
+    key="aba_radio"
+)
+
+# Sincroniza a aba escolhida no rádio com o estado do sistema
+st.session_state.aba_atual = aba
 
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
