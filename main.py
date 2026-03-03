@@ -79,7 +79,7 @@ if cpf_input:
             
             if not minhas_vendas.empty:
                 # Seleciona apenas as colunas importantes para mostrar ao cliente
-                exibir_vendas = minhas_vendas[['Data_Venda', 'Litragem_Total', 'Estilo_Chopp']]
+                exibir_vendas = minhas_vendas[['Data_Venda', 'Litragem_Total']]
                 st.table(exibir_vendas) # Mostra uma tabela limpa
             else:
                 st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
