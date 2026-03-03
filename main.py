@@ -3,7 +3,34 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
+# --- ESTILO LIMPO ---
+st.markdown("""
+    <style>
+    /* Fonte e fundo mais limpos */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    
+    html, body, [class*="css"]  {
+        font-family: 'Inter', sans-serif;
+    }
 
+    /* Cards discretos para informações importantes */
+    .metric-card {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Botões mais sóbrios */
+    .stButton>button {
+        border-radius: 4px;
+        background-color: #262730;
+        color: white;
+        border: None;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # 2. CONEXÃO COM GOOGLE SHEETS
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
