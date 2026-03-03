@@ -26,7 +26,12 @@ except Exception as e:
 st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺")
 st.title("🍺 Portal do Alquimista")
 
-cpf_input = st.text_input("Digite seu CPF ou CNPJ (só números):")
+st.sidebar.image("URL_DA_SUA_LOGO_AQUI", width=200) # Se tiver a logo na web, cole a URL
+st.sidebar.title("Culundria Cervejaria")
+st.sidebar.markdown("---")
+st.sidebar.write("📍 Cruzília, MG")
+
+cpf_input = st.text_input("Digite seu CPF (só números):")
 
 if cpf_input:
     df = pd.DataFrame(sheet.get_all_records())
