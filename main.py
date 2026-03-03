@@ -145,7 +145,7 @@ elif aba == "Painel do Mestre (Admin)":
                 st.table(df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']])
             with col_b:
                 st.subheader("🍺 Estilos")
-                st.bar_chart(df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum())
+                st.bar_chart(df_vendas.groupby('Estilo Chopp')['Litragem_Total'].sum())
         except Exception as e:
             st.error(f"Erro no Admin: {e}")
     elif senha != "":
