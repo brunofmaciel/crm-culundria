@@ -6,6 +6,58 @@ import pandas as pd
 # 1. CONFIGURAÇÃO DA PÁGINA (Sempre o primeiro comando Streamlit)
 st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺", layout="centered")
 
+# --- ESTILIZAÇÃO PERSONALIZADA (CSS) ---
+st.markdown("""
+    <style>
+    /* Fundo do App e Fonte */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f5f5f5; /* Um cinza bem claro para destacar os cards */
+    }
+    
+    /* Estilização da Barra Lateral */
+    [data-testid="stSidebar"] {
+        background-color: #1a1a1a;
+        color: white;
+    }
+
+    /* Cards de Informação */
+    .stMetric {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-left: 5px solid #f39c12; /* Cor de cerveja */
+    }
+
+    /* Botões Personalizados */
+    .stButton>button {
+        width: 100%;
+        border-radius: 10px;
+        background-color: #f39c12;
+        color: white;
+        font-weight: bold;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #d35400;
+        transform: scale(1.02);
+    }
+
+    /* Títulos e Textos */
+    h1, h2, h3 {
+        color: #2c3e50;
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    /* Efeito no Copo (Barra de Progresso) */
+    .stProgress > div > div > div > div {
+        background-color: #f1c40f; /* Cor Amarelo Chopp */
+        background-image: linear-gradient(to right, #f1c40f, #e67e22);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # 2. CONEXÃO COM GOOGLE SHEETS
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
