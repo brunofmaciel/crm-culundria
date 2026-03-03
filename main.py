@@ -149,15 +149,16 @@ elif aba == "Quero ser Alquimista (Cadastro)":
         if submit_cad:
             if nome and cpf_novo and whatsapp and email:
                 try:
+                    # TENTA FAZER O CADASTRO
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
+                    
                     if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
                         st.warning("CPF já cadastrado! Vá ao Portal do Cliente.")
                     else:
-                        # Pegamos a data atual
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
-
-                        # Certifique-se de que a linha abaixo esteja COMPLETA:
+                        
+                        # Lista completa e fechada corretamente
                         nova_linha = [
                             str(cpf_novo).strip(), 
                             nome.strip().upper(), 
@@ -170,3 +171,12 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                         ]
                         
                         sheet_cli.append_row(nova_linha)
+                        st.success(f"Bem-vindo, {nome.split()[0]}! Sua jornada começou.")
+                        st.balloons()
+                
+                except Exception as e:
+                    # SE DER ERRO ACIMA, EXECUTA ISSO (O que estava faltando!)
+                    st.error(f"Erro ao salvar no grimório: {e}")
+            
+            else:
+                st.error("Preencha todos os campos!")
