@@ -196,7 +196,7 @@ elifelif aba == "Quero ser Alquimista (Cadastro)":
         nome = st.text_input("Nome Completo")
         cpf_novo = st.text_input("Seu CPF (apenas números)")
         whatsapp = st.text_input("WhatsApp (com DDD)")
-        email = st.text_input("E-mail") # Mudamos de 'e-mail' para 'email'
+        email = st.text_input("email") # Mudamos de 'e-mail' para 'email'
         
         submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
 
