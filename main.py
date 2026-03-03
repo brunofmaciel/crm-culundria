@@ -3,32 +3,15 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
+# 1. CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺", layout="centered")
+
 # --- ESTILO LIMPO ---
 st.markdown("""
     <style>
-    /* Fonte e fundo mais limpos */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-    
-    html, body, [class*="css"]  {
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Cards discretos para informações importantes */
-    .metric-card {
-        background-color: #ffffff;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    /* Botões mais sóbrios */
-    .stButton>button {
-        border-radius: 4px;
-        background-color: #262730;
-        color: white;
-        border: None;
-    }
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+    .stButton>button { border-radius: 4px; background-color: #262730; color: white; border: None; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -44,15 +27,14 @@ except Exception as e:
     st.error(f"Erro na conexão com Google: {e}")
     st.stop()
 
-# Nome EXATO da sua planilha no Google Drive
 NOME_PLANILHA = "crm-culundria" 
 
-# 3. BARRA LATERAL (LOGO E NAVEGAÇÃO)
+# 3. BARRA LATERAL
 with st.sidebar:
     try:
         st.image("logoculundria.png", use_container_width=True)
     except:
-        st.warning("Arquivo 'logoculundria.png' não encontrado no GitHub.")
+        st.warning("Logo não encontrada.")
     
     st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
     st.write("📍 Cruzília, MG")
@@ -62,17 +44,12 @@ with st.sidebar:
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
 # ==========================================
-# ==========================================
-# ABA 1: PORTAL DO CLIENTE
-# ==========================================
 if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
-    
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
     if cpf_input:
         try:
-            # 1. Busca os dados do cliente
             sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
             df = pd.DataFrame(sheet.get_all_records())
             df['ID_Cliente'] = df['ID_Cliente'].astype(str)
@@ -82,141 +59,94 @@ if aba == "Portal do Cliente":
                 c = cliente.iloc[0]
                 st.balloons()
 
-                # 2. Cálculo do Progresso (PRECISA vir antes de mostrar na tela)
+                # Cálculo do Progresso
                 try:
                     val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
-                    # Ajuste para percentual (se for 80 vira 0.8)
-                    if val_bruto > 1.0: 
-                        val_bruto = val_bruto / 100.0
+                    if val_bruto > 1.0: val_bruto = val_bruto / 100.0
                     progresso = min(max(val_bruto, 0.0), 1.0)
                 except:
                     progresso = 0.0
 
-                # 3. Layout Organizado em Container e Colunas
+                # Layout Principal
                 with st.container():
                     st.header(f"Olá, {c['Nome_Completo']}!")
                     st.write("---")
-                    
                     col1, col2 = st.columns([2, 1])
-                    
                     with col1:
-                        # Informações principais do progresso
                         st.subheader(f"Nível: {c['Nível_Atual']}")
                         st.progress(progresso)
-                        st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho para o próximo nível!")
-                        
+                        st.caption(f"Você completou **{int(progresso * 100)}%** do caminho!")
                     with col2:
-                        # Destaque de pontos
                         st.metric("Pontos Atuais", f"{c['Pontos_Totais']} pts")
 
-                # 4. Histórico de Vendas (Fora do container principal)
+                # Histórico de Vendas
                 st.markdown("---")
                 st.write("### 📜 Seu Histórico de Alquimia")
                 try:
                     sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
                     df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
-                    # Limpa zeros e valores vazios para a tabela ficar bonita
                     df_vendas = df_vendas.replace(0, "").fillna("")
-                    
                     minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
                     
                     if not minhas_vendas.empty:
                         colunas_exibir = ['ID_Pedido', 'Data_Venda', 'Litragem_Total', 'Total Pontos']
                         st.table(minhas_vendas[colunas_exibir])
                     else:
-                        st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
-                except Exception as e:
-                    st.warning(f"Não foi possível carregar o histórico: {e}")
+                        st.info("Nenhum registro encontrado.")
+                except:
+                    st.warning("Erro ao carregar histórico.")
 
-            else:
-                st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
-        
-        except Exception as e:
-            st.error(f"Erro ao acessar a base de dados: {e}")
-                # --- FORMULÁRIO DE INDICAÇÃO ---
+                # Formulário de Indicação
                 st.markdown("---")
-                st.write("### 🚀 Indique um Amigo e Ganhe Pontos!")
+                st.write("### 🚀 Indique um Amigo")
                 with st.form("form_indicacao", clear_on_submit=True):
                     nome_amigo = st.text_input("Nome do Amigo")
-                    tel_amigo = st.text_input("WhatsApp do Amigo (com DDD)")
-                    submit = st.form_submit_button("Enviar Indicação")
-                    
-                    if submit:
+                    tel_amigo = st.text_input("WhatsApp")
+                    if st.form_submit_button("Enviar"):
                         if nome_amigo and tel_amigo:
-                            sheet_ind = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
-                            sheet_ind.append_row([cpf_input, nome_amigo, tel_amigo, "Pendente"])
-                            st.success(f"Indicação de {nome_amigo} enviada!")
+                            client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").append_row([cpf_input, nome_amigo, tel_amigo, "Pendente"])
+                            st.success("Indicação enviada!")
                         else:
-                            st.error("Preencha todos os campos.")
+                            st.error("Preencha os campos.")
             else:
-                st.warning("CPF não encontrado. Fale com o mestre cervejeiro!")
+                st.warning("CPF não cadastrado.")
         except Exception as e:
-            st.error(f"Erro ao acessar dados: {e}")
+            st.error(f"Erro: {e}")
 
 # ==========================================
-# ABA 2: PAINEL DO MESTRE (ADMIN)
-# ==========================================
-        # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
 elif aba == "Painel do Mestre (Admin)":
-    st.title("🏰 Painel do Mestre Cervejeiro")
-    
-    # 1. Definição da Senha
-    senha = st.sidebar.text_input("Senha de Acesso:", type="password")
+    st.title("🏰 Painel do Mestre")
+    senha = st.sidebar.text_input("Senha:", type="password")
     
     if senha == st.secrets["admin_password"]:
-        st.success("Acesso autorizado, Bruno!")
-        
+        st.success("Acesso autorizado!")
         try:
-            # 2. Carregamento dos Dados
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             
-            # 3. Limpeza de Dados (Anti-5000 litros)
-            def limpar_numero(valor):
-                if isinstance(valor, str):
-                    valor = valor.replace('.', '').replace(',', '.')
-                return pd.to_numeric(valor, errors='coerce')
+            def limpar_num(v):
+                if isinstance(v, str): v = v.replace('.', '').replace(',', '.')
+                return pd.to_numeric(v, errors='coerce')
 
-            df_vendas['Litragem_Total'] = df_vendas['Litragem_Total'].apply(limpar_numero).fillna(0)
-            df_clientes['Pontos_Totais'] = df_clientes['Pontos_Totais'].apply(limpar_numero).fillna(0)
-
-            # --- 4. EXIBIÇÃO DAS MÉTRICAS (KPIs) ---
-            st.subheader("📊 Resumo de Operação")
+            df_vendas['Litragem_Total'] = df_vendas['Litragem_Total'].apply(limpar_num).fillna(0)
+            
+            st.subheader("📊 Resumo")
             c1, c2, c3 = st.columns(3)
-            
-            total_litros = df_vendas['Litragem_Total'].sum()
-            num_clientes = len(df_clientes)
-            
-            with c1:
-                st.metric("Total Vendido", f"{total_litros:,.1f} L".replace(".", ","))
-            with c2:
-                st.metric("Alquimistas", num_clientes)
-            with c3:
-                media = total_litros / num_clientes if num_clientes > 0 else 0
-                st.metric("Média/Cli", f"{media:.1f} L".replace(".", ","))
+            total = df_vendas['Litragem_Total'].sum()
+            c1.metric("Total Vendido", f"{total:,.1f} L".replace(".", ","))
+            c2.metric("Clientes", len(df_clientes))
+            c3.metric("Média/Cli", f"{(total/len(df_clientes)):.1f} L" if len(df_clientes)>0 else "0")
 
-            # --- 5. GRÁFICOS E RANKING ---
-            st.markdown("---")
-            col_esq, col_dir = st.columns(2)
-            
-            with col_esq:
-                st.subheader("🏆 Top 5 Alquimistas")
-                if 'Pontos_Totais' in df_clientes.columns:
-                    top_5 = df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
-                    st.table(top_5)
-            
-            with col_dir:
-                st.subheader("🍺 Estilos mais Pedidos")
-                if 'Estilo_Chopp' in df_vendas.columns:
-                    vendas_estilo = df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum()
-                    st.bar_chart(vendas_estilo)
-
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.subheader("🏆 Top 5")
+                st.table(df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']])
+            with col_b:
+                st.subheader("🍺 Estilos")
+                st.bar_chart(df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum())
         except Exception as e:
-            st.error(f"Erro ao processar dados da planilha: {e}")
-
+            st.error(f"Erro no Admin: {e}")
     elif senha != "":
-        st.error("Senha incorreta. Verifique os Secrets do Streamlit.")
-
-# --- FIM DO ARQUIVO ---
+        st.error("Senha incorreta.")
