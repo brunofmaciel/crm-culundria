@@ -36,35 +36,38 @@ NOME_PLANILHA = "crm-culundria"
 
 # --- FUNÇÃO DE NÍVEIS DA CONFRARIA ---
 def calcular_status_confraria(pontos):
-    if pontos <= 100:
+    # Nível 1: 0 a 500 pontos
+    if pontos <= 500:
         return {
             "nivel": "Explorador",
             "desc": "Você está descobrindo novos horizontes. Cada gole é uma nova experiência!",
             "cor": "#a8dadc",
-            "proximo": "Faltam poucos goles para você se tornar um 'Chegado' da casa."
+            "proximo": f"Faltam {501 - pontos} pontos para você se tornar um 'Chegado' da casa."
         }
-    elif pontos <= 300:
+    # Nível 2: 501 a 1000 pontos
+    elif pontos <= 1000:
         return {
             "nivel": "Chegado",
             "desc": "A casa já é sua! Você já conhece o caminho das torneiras e o nosso balcão te reconhece.",
             "cor": "#e68a00",
-            "proximo": "Continue a jornada para se tornar um 'Tarimbado'."
+            "proximo": f"Faltam {1001 - pontos} pontos para se tornar um 'Tarimbado'."
         }
-    elif pontos <= 600:
+    # Nível 3: 1001 a 2000 pontos
+    elif pontos <= 2000:
         return {
             "nivel": "Tarimbado",
             "desc": "Veterano de guerra! Seu paladar já viveu grandes histórias com nossos rótulos.",
             "cor": "#d4a017",
-            "proximo": "Você está a um passo de se tornar um Patrimônio da Culundria!"
+            "proximo": f"Faltam {2001 - pontos} pontos para virar um Patrimônio da Culundria!"
         }
+    # Nível 4: Acima de 2000 pontos
     else:
         return {
             "nivel": "Patrimônio da Culundria",
             "desc": "Você não é mais cliente, é parte da nossa história. Seu lugar no balcão é sagrado.",
             "cor": "#ffcc33",
-            "proximo": "Obrigado por fazer parte da nossa essência! 🍻"
+            "proximo": "Você atingiu o topo da nossa Confraria! 🍻"
         }
-
 # --- 3. LÓGICA DE NAVEGAÇÃO (ESTRUTURA BLINDADA) ---
 opcoes_menu = ["Meu Painel (Login)", "Fazer Parte da Confraria", "Área do Mestre"]
 
