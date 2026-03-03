@@ -115,7 +115,7 @@ elif aba == "Painel do Mestre (Admin)":
     
     senha = st.sidebar.text_input("Senha de Acesso:", type="password")
     
-    if senha == st.secrets["admin_password"]:
+    if senha == st.secrets["Bm47400!"]:
         st.success("Acesso autorizado, Bruno!")
         
         try:
