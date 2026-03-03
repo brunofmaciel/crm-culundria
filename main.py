@@ -162,42 +162,54 @@ elif aba == "Fazer Parte da Confraria":
             else: st.error("Preencha Nome, CPF e Senha.")
 
 # ==========================================
-# ABA 3: ÁREA DO MESTRE (ADMIN) - CORRIGIDA
+# ABA 3: ÁREA DO MESTRE (ADMIN) - VERSÃO BLINDADA
 # ==========================================
 elif aba == "Área do Mestre":
     st.title("🏰 Área do Mestre")
     
-    # Adicionamos uma "key" única para o input de senha não se perder
     senha_adm = st.text_input("Chave do Grimório (Senha):", type="password", key="senha_admin_mestre")
     
     if senha_adm == st.secrets["admin_password"]:
         st.success("Grimório de dados aberto!")
         try:
+            # 1. Carrega os dados
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             
+            # 2. Limpeza de colunas e Conversão de Tipos (AQUI ESTÁ A SOLUÇÃO)
             df_vendas.columns = df_vendas.columns.str.strip()
-            df_clientes.columns = df_clientes.columns.str.strip()
+            
+            # Forçamos a conversão para número. O que não for número vira 0.
+            df_vendas['Litragem_Total'] = pd.to_numeric(df_vendas['Litragem_Total'], errors='coerce').fillna(0)
+            df_clientes['Pontos_Totais'] = pd.to_numeric(df_clientes['Pontos_Totais'], errors='coerce').fillna(0)
             
             st.subheader("📊 Resumo da Brassagem")
             c1, c2, c3 = st.columns(3)
-            litragem = pd.to_numeric(df_vendas['Litragem_Total'], errors='coerce').sum()
-            c1.metric("Litragem Total", f"{litragem:.1f} L")
-            c2.metric("Confrades", len(df_clientes))
-            c3.metric("Pontos Totais", int(pd.to_numeric(df_clientes['Pontos_Totais'], errors='coerce').sum()))
             
+            litragem_acumulada = df_vendas['Litragem_Total'].sum()
+            c1.metric("Litragem Total", f"{litragem_acumulada:.1f} L")
+            c2.metric("Confrades", len(df_clientes))
+            c3.metric("Pontos Totais", int(df_clientes['Pontos_Totais'].sum()))
+            
+            # 3. Gráficos e Tabelas
             col_chart, col_top = st.columns([2, 1])
+            
             with col_chart:
                 st.subheader("🍺 Estilos mais pedidos")
                 if 'Estilo Chopp' in df_vendas.columns:
+                    # Agrupamos e somamos a litragem limpa
                     vendas_estilo = df_vendas.groupby('Estilo Chopp')['Litragem_Total'].sum()
                     st.bar_chart(vendas_estilo)
+                else:
+                    st.warning("Coluna 'Estilo Chopp' não encontrada na aba VENDAS.")
             
             with col_top:
                 st.subheader("🏆 Top Confrades")
                 top_5 = df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
                 st.table(top_5)
                 
-        except Exception as e: st.error(f"Erro ao carregar gráficos: {e}")
+        except Exception as e: 
+            st.error(f"Erro ao processar os dados: {e}")
+            
     elif senha_adm != "":
         st.error("A chave está incorreta, Confrade.")
