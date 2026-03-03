@@ -4,9 +4,12 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 
 # Conexão com Google Sheets
-scope = ["https://www.googleapis.com/auth/spreadsheets"]
+scope = ["https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
 info = dict(st.secrets["gcp_service_account"])
-info["private_key"] = info["private_key"].replace("\\n", "\n") # Corrige quebras de linha
+info["private_key"] = info["private_key"].replace("\\n", "\n")
 creds = Credentials.from_service_account_info(info, scopes=scope)
 client = gspread.authorize(creds)
 
@@ -16,7 +19,7 @@ NOME_PLANILHA = "crm-culundria"
 try:
     sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
 except Exception as e:
-    st.error(f"Erro: Planilha não encontrada ou sem permissão. {e}")
+    st.error(f"Erro ao abrir a planilha: {e}")
     st.stop()
 
 # INTERFACE
