@@ -144,32 +144,34 @@ if aba == "Portal do Cliente":
             st.error(f"Erro ao acessar dados: {e}")
 
 # ==========================================
-# ABA 2: CADASTRO
+# ABA 2: CADASTRO DE NOVOS ALQUIMISTAS
 # ==========================================
 elif aba == "Quero ser Alquimista (Cadastro)":
     st.title("🧪 Inicie sua Jornada Alquímica")
-    st.write("Preencha os dados abaixo para começar a acumular pontos na Culundria!")
+    st.write("Preencha os dados abaixo para criar sua conta e proteger seus pontos!")
 
     with st.form("form_cadastro", clear_on_submit=True):
         nome = st.text_input("Nome Completo")
         cpf_novo = st.text_input("Seu CPF (apenas números)")
         whatsapp = st.text_input("WhatsApp (com DDD)")
         email = st.text_input("E-mail")
+        senha_nova = st.text_input("Crie uma Senha", type="password", help="Escolha uma senha para proteger seus resgates.")
+        
         submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
 
         if submit_cad:
-            if nome and cpf_novo and whatsapp and email:
+            if nome and cpf_novo and whatsapp and email and senha_nova:
                 try:
-                    # TENTA FAZER O CADASTRO
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
                     
                     if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
-                        st.warning("CPF já cadastrado! Vá ao Portal do Cliente.")
+                        st.warning("Este CPF já está cadastrado! Vá ao Portal do Cliente.")
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
-                        # Lista completa e fechada corretamente
+                        # ORDEM DAS COLUNAS NA PLANILHA (A até I):
+                        # A=CPF, B=Nome, C=WhatsApp, D=Email, E=Nível, F=Pontos, G=Progresso, H=Data, I=Senha
                         nova_linha = [
                             str(cpf_novo).strip(), 
                             nome.strip().upper(), 
@@ -178,16 +180,14 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                             "Alquimista Aprendiz", 
                             0, 
                             0, 
-                            data_hoje
+                            data_hoje,
+                            senha_nova.strip() # <--- A senha entra aqui!
                         ]
                         
                         sheet_cli.append_row(nova_linha)
-                        st.success(f"Bem-vindo, {nome.split()[0]}! Sua jornada começou.")
+                        st.success(f"Bem-vindo, {nome.split()[0]}! Sua conta foi criada com segurança.")
                         st.balloons()
-                
                 except Exception as e:
-                    # SE DER ERRO ACIMA, EXECUTA ISSO (O que estava faltando!)
-                    st.error(f"Erro ao salvar no grimório: {e}")
-            
+                    st.error(f"Erro ao salvar cadastro: {e}")
             else:
-                st.error("Preencha todos os campos!")
+                st.error("Por favor, preencha todos os campos, incluindo a senha.")
