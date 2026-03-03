@@ -82,19 +82,20 @@ if aba == "Meu Painel (Login)":
 
         if st.button("ENTRAR NA CONFRARIA"):
             try:
+                # 1. Abre a planilha e lê os dados
                 sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                data = sheet.get_all_records()
-                df = pd.DataFrame(data)
+                df = pd.DataFrame(sheet.get_all_records())
                 
-                # --- LIMPEZA PESADA DOS CPFs ---
-                # 1. Transforma em texto, tira o .0 e remove espaços
-                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+                # --- AQUI É ONDE A MÁGICA DO ZERO ACONTECE ---
+                # Transformamos em texto, tiramos o .0, limpamos espaços e forçamos 11 dígitos (.zfill)
+                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
                 
-                # 2. Limpa o que o usuário digitou (só números e sem espaços)
-                cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip()
+                # Limpamos o CPF que o cliente digitou e também forçamos 11 dígitos
+                cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip().zfill(11)
                 
-                # 3. Faz a busca exata
+                # Fazemos a busca comparando "077..." com "077..."
                 cliente = df[df['ID_Cliente'] == cpf_digitado]
+                # ----------------------------------------------
 
                 if not cliente.empty:
                     c = cliente.iloc[0]
