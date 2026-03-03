@@ -34,13 +34,10 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
-# 3. LÓGICA DE NAVEGAÇÃO
-# --- INICIALIZAÇÃO DA NAVEGAÇÃO ---
-# Se for a primeira vez abrindo o app, define a aba inicial
+# 3. LÓGICA DE NAVEGAÇÃO ÚNICA
 if "menu_radio" not in st.session_state:
     st.session_state.menu_radio = "Portal do Cliente"
 
-# 3. BARRA LATERAL (LOGO E NAVEGAÇÃO)
 with st.sidebar:
     try:
         st.image("logoculundria.png", use_container_width=True)
@@ -51,29 +48,12 @@ with st.sidebar:
     st.write("📍 Cruzília, MG")
     st.markdown("---")
     
-    # O segredo é o rádio usar a 'key="menu_radio"'
+    # Criamos o rádio vinculado diretamente à chave 'menu_radio'
     aba = st.sidebar.radio(
         "Ir para:", 
         ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"],
         key="menu_radio"
     )
-if 'aba_atual' not in st.session_state:
-    st.session_state.aba_atual = "Portal do Cliente"
-
-indice_atual = opcoes_menu.index(st.session_state.aba_atual)
-
-with st.sidebar:
-    try:
-        st.image("logoculundria.png", use_container_width=True)
-    except:
-        st.warning("Logo não encontrada.")
-    
-    st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
-    st.write("📍 Cruzília, MG")
-    st.markdown("---")
-    
-    aba = st.sidebar.radio("Ir para:", opcoes_menu, index=indice_atual, key="menu_radio")
-    st.session_state.aba_atual = aba
 
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
@@ -82,12 +62,11 @@ if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
-    # --- LINK DE CADASTRO ---
+    # --- O BOTÃO QUE MUDA A ABA ---
     st.write("") 
     if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
-        # Mudamos diretamente a chave do rádio na memória do App
         st.session_state.menu_radio = "Quero ser Alquimista (Cadastro)"
-        st.rerun() # Força o App a recarregar já na aba nova
+        st.rerun()
 
     if cpf_input:
         try:
@@ -99,7 +78,6 @@ if aba == "Portal do Cliente":
             if not cliente.empty:
                 c = cliente.iloc[0]
                 
-                # Cálculo de Progresso
                 try:
                     val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
                     if val_bruto > 1.0: val_bruto = val_bruto / 100.0
@@ -120,17 +98,16 @@ if aba == "Portal do Cliente":
                     """, unsafe_allow_html=True)
                     st.write("")
                     st.progress(progresso)
-                    st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho para o próximo nível.")
+                    st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho.")
 
                 with col_pontos:
                     st.metric("ESSÊNCIA ACUMULADA", f"{c['Pontos_Totais']} PTS")
 
-                # Histórico
                 st.markdown("### 📜 GRIMÓRIO DE PEDIDOS")
                 try:
                     sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
                     df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
-                    df_vendas.columns = df_vendas.columns.str.strip() # Limpa nomes das colunas
+                    df_vendas.columns = df_vendas.columns.str.strip()
                     minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
                     
                     if not minhas_vendas.empty:
@@ -141,7 +118,6 @@ if aba == "Portal do Cliente":
                 except:
                     st.warning("Erro ao carregar histórico.")
 
-                # Indicação
                 st.markdown("---")
                 st.write("### 🚀 INDIQUE UM AMIGO")
                 with st.form("form_indicacao", clear_on_submit=True):
@@ -175,58 +151,8 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                 try:
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
-                    
                     if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
                         st.warning("CPF já cadastrado! Vá ao Portal do Cliente.")
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
-                        # Ordem: CPF, Nome, WhatsApp, Email, Nível, Pontos, Progresso, Data
-                        nova_linha = [str(cpf_novo).strip(), nome.strip().upper(), whatsapp.strip(), email.strip().lower(), "Alquimista Aprendiz", 0, 0, data_hoje]
-                        sheet_cli.append_row(nova_linha)
-                        st.success(f"Bem-vindo, {nome.split()[0]}!")
-                        st.balloons()
-                except Exception as e:
-                    st.error(f"Erro ao salvar cadastro: {e}")
-            else:
-                st.error("Preencha todos os campos!")
-
-# ==========================================
-# ABA 3: ADMIN
-# ==========================================
-elif aba == "Painel do Mestre (Admin)":
-    st.title("🏰 Painel do Mestre")
-    senha = st.sidebar.text_input("Senha:", type="password")
-    
-    if senha == st.secrets["admin_password"]:
-        st.success("Acesso autorizado!")
-        try:
-            df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
-            df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
-            df_vendas.columns = df_vendas.columns.str.strip() # Limpeza crucial
-            
-            def limpar_num(v):
-                if isinstance(v, str): v = v.replace('.', '').replace(',', '.')
-                return pd.to_numeric(v, errors='coerce')
-
-            df_vendas['Litragem_Total'] = df_vendas['Litragem_Total'].apply(limpar_num).fillna(0)
-            
-            st.subheader("📊 Resumo")
-            c1, c2, c3 = st.columns(3)
-            total = df_vendas['Litragem_Total'].sum()
-            c1.metric("Total Vendido", f"{total:,.1f} L".replace(".", ","))
-            c2.metric("Clientes", len(df_clientes))
-            c3.metric("Média/Cli", f"{(total/len(df_clientes)):.1f} L" if len(df_clientes)>0 else "0")
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.subheader("🏆 Top 5")
-                st.table(df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']])
-            with col_b:
-                st.subheader("🍺 Estilos")
-                # Se a coluna na planilha for 'Estilo Chopp', o código abaixo funciona:
-                if 'Estilo Chopp' in df_vendas.columns:
-                    st.bar_chart(df_vendas.groupby('Estilo Chopp')['Litragem_Total'].sum())
-        except Exception as e:
-            st.error(f"Erro no Admin: {e}")
-    elif senha != "":
-        st.error("Senha incorreta.")
+                        nova_linha = [str(cpf_novo).strip(), nome.strip().upper(), whatsapp.strip(), email.strip().lower(), "Alquim
