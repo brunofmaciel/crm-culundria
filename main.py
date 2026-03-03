@@ -4,7 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 
 # 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺", layout="centered")
+st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
 # --- ESTILO PREMIUM CULUNDRIA ---
 st.markdown("""
@@ -34,8 +34,40 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
+# --- NÍVEIS DOS USUÁRIOS ---
+
+def calcular_status_confraria(pontos):
+    if pontos <= 100:
+        return {
+            "nivel": "Explorador",
+            "desc": "Você está descobrindo novos horizontes. Cada gole é uma nova experiência!",
+            "cor": "#a8dadc",
+            "proximo": "Faltam poucos goles para você se tornar um 'Chegado' da casa."
+        }
+    elif pontos <= 300:
+        return {
+            "nivel": "Chegado",
+            "desc": "A casa já é sua! Você já conhece o caminho das torneiras e o nosso balcão te reconhece.",
+            "cor": "#e68a00",
+            "proximo": "Continue a jornada para se tornar um 'Tarimbado'."
+        }
+    elif pontos <= 600:
+        return {
+            "nivel": "Tarimbado",
+            "desc": "Veterano de guerra! Seu paladar já viveu grandes histórias com nossos rótulos.",
+            "cor": "#d4a017",
+            "proximo": "Você está a um passo de se tornar um Patrimônio da Culundria!"
+        }
+    else:
+        return {
+            "nivel": "Patrimônio da Culundria",
+            "desc": "Você não é mais cliente, é parte da nossa história. Seu lugar no balcão é sagrado.",
+            "cor": "#ffcc33",
+            "proximo": "Obrigado por fazer parte da nossa essência! 🍻"
+        }
+
 # --- 3. LÓGICA DE NAVEGAÇÃO (ESTRUTURA LIMPA) ---
-opcoes_menu = ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"]
+opcoes_menu = ["Meu Painel (Login)", "Fazer Parte da Confraria", "Área do Mestre"]
 
 # Se for a primeira vez, começamos no Portal
 if "aba_selecionada" not in st.session_state:
@@ -66,15 +98,15 @@ with st.sidebar:
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
 # ==========================================
-if aba == "Portal do Cliente":
-    st.title("🍺 Portal do Alquimista")
+if aba == "Meu painel":
+    st.title("🍺 Culundria Confraria")
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
     # --- O BOTÃO DE "PULO" ---
     st.write("") 
-    if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
+    if st.button("✨ Acompanhe sua saga. Cadastre-se aqui."):
         # Aqui mudamos a variável e damos o rerun. O rádio vai ler o novo índice sozinho!
-        st.session_state.aba_selecionada = "Quero ser Alquimista (Cadastro)"
+        st.session_state.aba_selecionada = "Quero participar da Confraria (Cadastro)"
         st.rerun()
 
     # ... Resto do seu código do CPF (if cpf_input:) ...
@@ -96,7 +128,7 @@ if aba == "Portal do Cliente":
                 except:
                     progresso = 0.0
 
-                st.markdown(f"## BEM-VINDO, ALQUIMISTA {c['Nome_Completo'].split()[0].upper()}!")
+                st.markdown(f"## BEM-VINDO, CONFRADE {c['Nome_Completo'].split()[0].upper()}!")
                 st.write("---")
 
                 col_status, col_pontos = st.columns([2, 1])
@@ -112,9 +144,9 @@ if aba == "Portal do Cliente":
                     st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho.")
 
                 with col_pontos:
-                    st.metric("ESSÊNCIA ACUMULADA", f"{c['Pontos_Totais']} PTS")
+                    st.metric("GOLES DE VANTAGEM", f"{c['Pontos_Totais']} PTS")
 
-                st.markdown("### 📜 GRIMÓRIO DE PEDIDOS")
+                st.markdown("### 📜 HISTÓRICO DE PEDIDOS")
                 try:
                     sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
                     df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
@@ -130,7 +162,7 @@ if aba == "Portal do Cliente":
                     st.warning("Erro ao carregar histórico.")
 
                 st.markdown("---")
-                st.write("### 🚀 INDIQUE UM AMIGO")
+                st.write("### 🚀 INDIQUE UM CONFRADE")
                 with st.form("form_indicacao", clear_on_submit=True):
                     n_amigo = st.text_input("Nome do Amigo")
                     t_amigo = st.text_input("WhatsApp (com DDD)")
@@ -146,8 +178,8 @@ if aba == "Portal do Cliente":
 # ==========================================
 # ABA 2: CADASTRO DE NOVOS ALQUIMISTAS
 # ==========================================
-elif aba == "Quero ser Alquimista (Cadastro)":
-    st.title("🧪 Inicie sua Jornada Alquímica")
+elif aba == "Quero ser um CONFRADE(Cadastro)":
+    st.title("🧪 Entre para a Culundria Confraria")
     st.write("Preencha os dados abaixo para criar sua conta e proteger seus pontos!")
 
     with st.form("form_cadastro", clear_on_submit=True):
@@ -177,7 +209,7 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                             nome.strip().upper(), 
                             whatsapp.strip(), 
                             email.strip().lower(), 
-                            "Alquimista Aprendiz", 
+                            "Explorador", 
                             0, 
                             0, 
                             data_hoje,
