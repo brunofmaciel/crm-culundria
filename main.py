@@ -64,5 +64,27 @@ if cpf_input:
         
         # Mostra a porcentagem escrita para o cliente (ex: 85%)
         st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho!")
+        
+# --- BUSCA HISTÓRICO DE VENDAS ---
+        st.markdown("---")
+        st.write("### 📜 Seu Histórico de Alquimia")
+        
+        try:
+            # Abre a aba de Vendas
+            sheet_vendas = client.open(NOME_PLANILHA).worksheet("VENDAS")
+            df_vendas = pd.DataFrame(sheet_vendas.get_all_records())
+            
+            # Filtra as vendas pelo CPF do cliente logado
+            minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_input.strip()]
+            
+            if not minhas_vendas.empty:
+                # Seleciona apenas as colunas importantes para mostrar ao cliente
+                exibir_vendas = minhas_vendas[['Data_Venda', 'Litragem_Total', 'Estilo_Chopp']]
+                st.table(exibir_vendas) # Mostra uma tabela limpa
+            else:
+                st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
+        except:
+            st.warning("Não foi possível carregar o histórico agora.")
+    
     else:
         st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
