@@ -11,7 +11,7 @@ creds = Credentials.from_service_account_info(info, scopes=scope)
 client = gspread.authorize(creds)
 
 # CONFIGURAÇÃO: Coloque o nome EXATO da sua planilha aqui
-NOME_PLANILHA = "crm culundria" 
+NOME_PLANILHA = "crm-culundria" 
 
 try:
     sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
