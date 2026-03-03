@@ -219,6 +219,11 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                         # 5. Nível_Atual (E)
                         # 6. Pontos_Totais (F)
                         # 7. Progresso_Copo (G)
+                        # Pegamos a data atual formatada (Ex: 03/03/2026)
+                        data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
+
+                        # ORDEM DAS COLUNAS (Confira se a Coluna H é a Data):
+                        # A=CPF, B=Nome, C=WhatsApp, D=E-mail, E=Nível, F=Pontos, G=Progresso, H=Data
                         nova_linha = [
                             str(cpf_novo).strip(), 
                             nome.strip().upper(), 
@@ -226,7 +231,8 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                             email.strip().lower(), 
                             "Alquimista Aprendiz", 
                             0, 
-                            0
+                            0,
+                            data_hoje # <--- A data entra aqui no final!
                         ]
                         
                         sheet_cli.append_row(nova_linha)
