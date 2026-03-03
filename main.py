@@ -23,6 +23,17 @@ except Exception as e:
     st.stop()
 
 # INTERFACE
+
+# --- MENU DE NAVEGAÇÃO ---
+st.sidebar.title("Navegação")
+aba = st.sidebar.radio("Ir para:", ["Portal do Cliente", "Painel do Mestre (Admin)"])
+
+# ==========================================
+# ABA 1: PORTAL DO CLIENTE (O que já fizemos)
+# ==========================================
+if aba == "Portal do Cliente":
+    st.title("🍺 Portal do Alquimista")
+    # [COLE AQUI TODO O CÓDIGO DO CPF E HISTÓRICO QUE JÁ FUNCIONA]
 st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺")
 st.title("🍺 Portal do Alquimista")
 st.sidebar.image("logoculundria.png", use_container_width=True)
@@ -64,6 +75,61 @@ if cpf_input:
         
         # Mostra a porcentagem escrita para o cliente (ex: 85%)
         st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho!")
+
+# ==========================================
+# ABA 2: PAINEL DO MESTRE (ADMIN)
+# ==========================================
+elif aba == "Painel do Mestre (Admin)":
+    st.title("🏰 Painel do Mestre Cervejeiro")
+    
+    senha = st.sidebar.text_input("Digite a senha de acesso:", type="password")
+    
+    if senha == st.secrets["admin_password"]:
+        st.success("Acesso autorizado, Bruno!")
+        
+        # --- CARREGANDO DADOS PARA O DASHBOARD ---
+        df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
+        df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
+        
+        # --- 1. MÉTRICAS RÁPIDAS (KPIs) ---
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            total_litros = df_vendas['Litragem_Total'].sum()
+            st.metric("Total Litros Vendidos", f"{total_litros} L")
+        with col2:
+            num_clientes = len(df_clientes)
+            st.metric("Clientes Cadastrados", num_clientes)
+        with col3:
+            # Média de litros por cliente
+            media = total_litros / num_clientes if num_clientes > 0 else 0
+            st.metric("Média por Cliente", f"{media:.1f} L")
+
+        # --- 2. RANKING DE ALQUIMISTAS (TOP 5) ---
+        st.markdown("---")
+        st.subheader("🏆 Top 5 Maiores Consumidores")
+        # Ordena pelos pontos totais
+        top_5 = df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais', 'Nível_Atual']]
+        st.table(top_5)
+
+        # --- 3. GRÁFICO DE VENDAS POR ESTILO ---
+        st.markdown("---")
+        st.subheader("📊 Estilos mais Pedidos")
+        vendas_estilo = df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum()
+        st.bar_chart(vendas_estilo)
+
+        # --- 4. NOVAS INDICAÇÕES ---
+        st.markdown("---")
+        st.subheader("🚀 Indicações Pendentes")
+        try:
+            df_ind = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").get_all_records())
+            st.dataframe(df_ind[df_ind['Status'] == 'Pendente'])
+        except:
+            st.info("Nenhuma indicação nova no momento.")
+
+    elif senha != "":
+        st.error("Senha incorreta. Acesso negado.")
+
+
         
 # --- BUSCA HISTÓRICO DE VENDAS ---
         st.markdown("---")
