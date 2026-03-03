@@ -132,7 +132,7 @@ if aba == "Meu Painel (Login)":
                 <hr style='border: 0.1px solid #333;'>
                 <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['proximo']}</p>
             </div>
-        """, unsafe_allow_html=True)
+        "", unsafe_allow_html=True)
 
         st.write("")
         st.metric("MEUS GOLES DE VANTAGEM", f"{c['Pontos_Totais']} PTS")
