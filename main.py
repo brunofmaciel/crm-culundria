@@ -113,7 +113,7 @@ if aba == "Meu Painel (Login)":
         resumo = calcular_status_confraria(pontos)
         st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
         
-       card_html = "<div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid " + resumo['cor'] + ";'>"
+        card_html = "<div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid " + resumo['cor'] + ";'>"
         card_html += "<h2 style='margin:0; color: " + resumo['cor'] + "; font-size: 1.2em;'>STATUS: " + resumo['nivel'].upper() + "</h2>"
         card_html += "<p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>\"" + resumo['desc'] + "\"</p>"
         card_html += "<hr style='border: 0.1px solid #333;'>"
