@@ -83,21 +83,22 @@ if aba == "Meu Painel (Login)":
         if st.button("ENTRAR NA CONFRARIA"):
             try:
                 sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                df = pd.DataFrame(sheet.get_all_records())
+                data = sheet.get_all_records()
+                df = pd.DataFrame(data)
                 
-                # --- NORMALIZAÇÃO BLINDADA DO CPF ---
-                # 1. Transforma a coluna da planilha em texto, remove o ".0" (se houver) e limpa espaços
+                # --- LIMPEZA PESADA DOS CPFs ---
+                # 1. Transforma em texto, tira o .0 e remove espaços
                 df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
                 
-                # 2. Limpa o que o usuário digitou
-                cpf_digitado = str(cpf_input).strip()
+                # 2. Limpa o que o usuário digitou (só números e sem espaços)
+                cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip()
                 
-                # 3. Faz a busca
+                # 3. Faz a busca exata
                 cliente = df[df['ID_Cliente'] == cpf_digitado]
 
                 if not cliente.empty:
                     c = cliente.iloc[0]
-                    # Confere a senha ignorando espaços
+                    # Confere a senha
                     if str(senha_input).strip() == str(c['Senha']).strip():
                         st.session_state.logado = True
                         st.session_state.dados_usuario = c.to_dict()
@@ -105,13 +106,14 @@ if aba == "Meu Painel (Login)":
                     else:
                         st.error("Senha incorreta!")
                 else:
-                    # Se não encontrar, mostramos um aviso técnico discreto para ajudar você a testar
-                    st.warning(f"CPF {cpf_digitado} não localizado na base de dados.")
-                    # DICA PARA O MESTRE: Descomente a linha abaixo para ver o que o Python está lendo da planilha:
-                    # st.write("CPFs lidos:", df['ID_Cliente'].tolist()) 
-            
+                    st.warning(f"CPF {cpf_digitado} não localizado.")
+                    # MODO DEBUG (SÓ PARA O MESTRE VER O QUE ESTÁ NA PLANILHA):
+                    with st.expander("Verificar CPFs na base (Ajuda do Mestre)"):
+                        st.write("CPFs que o sistema está lendo da sua planilha:")
+                        st.write(df['ID_Cliente'].tolist())
+
             except Exception as e:
-                st.error(f"Erro ao acessar o banco de dados: {e}")
+                st.error(f"Erro técnico na busca: {e}")
         
         st.write("")
         if st.button("✨ Não tem conta? Cadastre-se aqui"):
