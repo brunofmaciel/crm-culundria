@@ -35,8 +35,28 @@ except Exception as e:
 NOME_PLANILHA = "crm-culundria" 
 
 # 3. LÓGICA DE NAVEGAÇÃO
-opcoes_menu = ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"]
+# --- INICIALIZAÇÃO DA NAVEGAÇÃO ---
+# Se for a primeira vez abrindo o app, define a aba inicial
+if "menu_radio" not in st.session_state:
+    st.session_state.menu_radio = "Portal do Cliente"
 
+# 3. BARRA LATERAL (LOGO E NAVEGAÇÃO)
+with st.sidebar:
+    try:
+        st.image("logoculundria.png", use_container_width=True)
+    except:
+        st.warning("Logo não encontrada.")
+    
+    st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
+    st.write("📍 Cruzília, MG")
+    st.markdown("---")
+    
+    # O segredo é o rádio usar a 'key="menu_radio"'
+    aba = st.sidebar.radio(
+        "Ir para:", 
+        ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"],
+        key="menu_radio"
+    )
 if 'aba_atual' not in st.session_state:
     st.session_state.aba_atual = "Portal do Cliente"
 
@@ -62,11 +82,12 @@ if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
-    # Link de redirecionamento para Cadastro
-    st.write("")
+    # --- LINK DE CADASTRO ---
+    st.write("") 
     if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
-        st.session_state.aba_atual = "Quero ser Alquimista (Cadastro)"
-        st.rerun()
+        # Mudamos diretamente a chave do rádio na memória do App
+        st.session_state.menu_radio = "Quero ser Alquimista (Cadastro)"
+        st.rerun() # Força o App a recarregar já na aba nova
 
     if cpf_input:
         try:
