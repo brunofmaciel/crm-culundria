@@ -25,7 +25,7 @@ except Exception as e:
 # INTERFACE
 st.set_page_config(page_title="Alquimista Culundria", page_icon="🍺")
 st.title("🍺 Portal do Alquimista")
-t.sidebar.image("logo.png", use_container_width=True)
+t.sidebar.image("logoculundria.crdownload", use_container_width=True)
 st.sidebar.markdown(f"<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
 st.sidebar.title("Culundria Cervejaria")
 st.sidebar.markdown("---")
