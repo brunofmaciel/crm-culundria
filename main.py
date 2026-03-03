@@ -155,4 +155,4 @@ if aba == "Meu Painel (Login)":
                 <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['proximo']}</p>
             </div>
         """
-        st.markdown(html_card, unsafe_allow_html=True
+        st.markdown(html_card, unsafe_allow_html=True)
