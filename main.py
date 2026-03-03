@@ -90,8 +90,8 @@ if cpf_input:
                 st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
         except:
             st.warning("Não foi possível carregar o histórico agora.")
-
-    st.markdown("---")
+          
+        st.markdown("---")
         st.write("### 🚀 Indique um Amigo e Ganhe Pontos!")
         
         with st.form("form_indicacao", clear_on_submit=True):
@@ -107,5 +107,6 @@ if cpf_input:
                     st.success(f"Indicação de {nome_amigo} enviada! Assim que ele fizer o 1º pedido, seus pontos caem na conta.")
                 else:
                     st.error("Preencha o nome e o telefone do seu amigo.")
+      
     else:
         st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
