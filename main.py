@@ -188,7 +188,7 @@ if aba == "Portal do Cliente":
 # ==========================================
 # NOVO: ABA DE CADASTRO
 # ==========================================
-elif aba == "Quero ser Alquimista (Cadastro)":
+elifelif aba == "Quero ser Alquimista (Cadastro)":
     st.title("🧪 Inicie sua Jornada Alquímica")
     st.write("Preencha os dados abaixo para começar a acumular pontos na Culundria!")
 
@@ -196,30 +196,48 @@ elif aba == "Quero ser Alquimista (Cadastro)":
         nome = st.text_input("Nome Completo")
         cpf_novo = st.text_input("Seu CPF (apenas números)")
         whatsapp = st.text_input("WhatsApp (com DDD)")
-        e-mail = st.text_input("e-mail")
+        email = st.text_input("E-mail") # Mudamos de 'e-mail' para 'email'
+        
         submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
 
         if submit_cad:
-            if nome and cpf_novo and whatsapp and e-mail:
+            # Conferindo se todos os campos foram preenchidos
+            if nome and cpf_novo and whatsapp and email:
                 try:
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
                     
-                    # Verifica se o CPF já existe
-                    if str(cpf_novo) in df_check['ID_Cliente'].astype(str).values:
-                        st.warning("Este CPF já está em nossa base de alquimistas! Vá ao Portal do Cliente para entrar.")
+                    # Verifica se o CPF já existe para evitar duplicatas no grimório
+                    if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
+                        st.warning("Este CPF já é de um Alquimista cadastrado! Vá ao Portal do Cliente.")
                     else:
-                        # Dados iniciais para o novo cliente
-                        # Ordem sugerida: ID_Cliente, Nome_Completo, Whatsapp, e-mail, Nível_Atual, Pontos_Totais, Progresso_Copo,
-                        nova_linha = [cpf_novo, nome, whatsapp, e-mail, "Alquimista Aprendiz", 0, 0]
+                        # Dados seguindo EXATAMENTE a sua nova ordem:
+                        # 1. ID_Cliente (A)
+                        # 2. Nome_Completo (B)
+                        # 3. WhatsApp (C)
+                        # 4. E-mail (D)
+                        # 5. Nível_Atual (E)
+                        # 6. Pontos_Totais (F)
+                        # 7. Progresso_Copo (G)
+                        nova_linha = [
+                            str(cpf_novo).strip(), 
+                            nome.strip().upper(), 
+                            whatsapp.strip(), 
+                            email.strip().lower(), 
+                            "Alquimista Aprendiz", 
+                            0, 
+                            0
+                        ]
+                        
                         sheet_cli.append_row(nova_linha)
                         
-                        st.success(f"Bem-vindo, {nome}! Sua conta foi criada. Agora é só pedir seu barril e acumular pontos!")
-                        st.balloons() # Aqui os balões valem a pena!
+                        st.success(f"Bem-vindo, {nome.split()[0]}! Sua jornada na Culundria começou.")
+                        st.balloons() 
+                        
                 except Exception as e:
-                    st.error(f"Erro ao salvar cadastro: {e}")
+                    st.error(f"Erro ao acessar o grimório de dados: {e}")
             else:
-                st.error("Por favor, preencha todos os campos para se tornar um Alquimista.")
+                st.error("O mestre cervejeiro precisa de todos os campos preenchidos!")
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
