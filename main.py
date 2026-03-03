@@ -110,50 +110,67 @@ if aba == "Portal do Cliente":
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
+        # ==========================================
+# ABA 2: PAINEL DO MESTRE (ADMIN)
+# ==========================================
+elif aba == "Painel do Mestre (Admin)":
+    st.title("🏰 Painel do Mestre Cervejeiro")
+    
+    # 1. Definição da Senha
+    senha = st.sidebar.text_input("Senha de Acesso:", type="password")
+    
+    if senha == st.secrets["admin_password"]:
+        st.success("Acesso autorizado, Bruno!")
+        
         try:
-            # 1. Carrega os dados
+            # 2. Carregamento dos Dados
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             
-            # 2. LIMPEZA "ANTI-VÍRGULA" (O segredo para os 50 litros)
+            # 3. Limpeza de Dados (Anti-5000 litros)
             def limpar_numero(valor):
                 if isinstance(valor, str):
-                    valor = valor.replace('.', '') # Remove ponto de milhar (ex: 1.000 -> 1000)
-                    valor = valor.replace(',', '.') # Troca vírgula por ponto decimal (ex: 50,5 -> 50.5)
+                    valor = valor.replace('.', '').replace(',', '.')
                 return pd.to_numeric(valor, errors='coerce')
 
             df_vendas['Litragem_Total'] = df_vendas['Litragem_Total'].apply(limpar_numero).fillna(0)
             df_clientes['Pontos_Totais'] = df_clientes['Pontos_Totais'].apply(limpar_numero).fillna(0)
 
-            # --- 3. MÉTRICAS RÁPIDAS (KPIs) ---
+            # --- 4. EXIBIÇÃO DAS MÉTRICAS (KPIs) ---
             st.subheader("📊 Resumo de Operação")
             c1, c2, c3 = st.columns(3)
             
-            # Filtramos para não somar nenhuma linha que possa ser um "Total" escrito na planilha
-            # (Geralmente IDs de pedido são números, se for texto como "TOTAL", a gente ignora)
-            vendas_reais = df_vendas[df_vendas['Litragem_Total'] > 0]
-            total_litros = vendas_reais['Litragem_Total'].sum()
+            total_litros = df_vendas['Litragem_Total'].sum()
             num_clientes = len(df_clientes)
             
             with c1:
-                # Mostra o número limpo. Se for 50, aparecerá 50.
-                st.metric("Total Litros", f"{total_litros:,.1f} L".replace(",", "X").replace(".", ",").replace("X", "."))
+                st.metric("Total Vendido", f"{total_litros:,.1f} L".replace(".", ","))
             with c2:
-                st.metric("Clientes", num_clientes)
+                st.metric("Alquimistas", num_clientes)
             with c3:
                 media = total_litros / num_clientes if num_clientes > 0 else 0
                 st.metric("Média/Cli", f"{media:.1f} L".replace(".", ","))
 
-            # Ranking
-            st.subheader("🏆 Top 5 Maiores Consumidores")
-            st.table(df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais', 'Nível_Atual']])
-
-            # Gráfico
-            st.subheader("📊 Estilos mais Pedidos")
-            if 'Estilo_Chopp' in df_vendas.columns:
-                st.bar_chart(df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum())
+            # --- 5. GRÁFICOS E RANKING ---
+            st.markdown("---")
+            col_esq, col_dir = st.columns(2)
             
+            with col_esq:
+                st.subheader("🏆 Top 5 Alquimistas")
+                if 'Pontos_Totais' in df_clientes.columns:
+                    top_5 = df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
+                    st.table(top_5)
+            
+            with col_dir:
+                st.subheader("🍺 Estilos mais Pedidos")
+                if 'Estilo_Chopp' in df_vendas.columns:
+                    vendas_estilo = df_vendas.groupby('Estilo_Chopp')['Litragem_Total'].sum()
+                    st.bar_chart(vendas_estilo)
+
         except Exception as e:
-            st.error(f"Erro ao carregar dashboard: {e}")
+            st.error(f"Erro ao processar dados da planilha: {e}")
+
     elif senha != "":
-        st.error("Senha incorreta.")
+        st.error("Senha incorreta. Verifique os Secrets do Streamlit.")
+
+# --- FIM DO ARQUIVO ---
