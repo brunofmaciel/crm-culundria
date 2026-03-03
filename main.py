@@ -196,11 +196,11 @@ elif aba == "Quero ser Alquimista (Cadastro)":
         nome = st.text_input("Nome Completo")
         cpf_novo = st.text_input("Seu CPF (apenas números)")
         whatsapp = st.text_input("WhatsApp (com DDD)")
-        
+        e-mail = st.text_input("e-mail")
         submit_cad = st.form_submit_button("CRIAR MINHA CONTA")
 
         if submit_cad:
-            if nome and cpf_novo and whatsapp:
+            if nome and cpf_novo and whatsapp and e-mail:
                 try:
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_check = pd.DataFrame(sheet_cli.get_all_records())
@@ -210,8 +210,8 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                         st.warning("Este CPF já está em nossa base de alquimistas! Vá ao Portal do Cliente para entrar.")
                     else:
                         # Dados iniciais para o novo cliente
-                        # Ordem sugerida: ID_Cliente, Nome_Completo, Nível_Atual, Pontos_Totais, Progresso_Copo, WhatsApp
-                        nova_linha = [cpf_novo, nome, "Alquimista Aprendiz", 0, 0, whatsapp]
+                        # Ordem sugerida: ID_Cliente, Nome_Completo, Whatsapp, e-mail, Nível_Atual, Pontos_Totais, Progresso_Copo,
+                        nova_linha = [cpf_novo, nome, whatsapp, e-mail, "Alquimista Aprendiz", 0, 0]
                         sheet_cli.append_row(nova_linha)
                         
                         st.success(f"Bem-vindo, {nome}! Sua conta foi criada. Agora é só pedir seu barril e acumular pontos!")
