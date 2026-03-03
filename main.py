@@ -112,15 +112,17 @@ if aba == "Meu Painel (Login)":
         pontos = float(c.get('Pontos_Totais', 0))
         resumo = calcular_status_confraria(pontos)
         st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
-        html_card = f"""
-            <div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid {resumo['cor']};'>
-                <h2 style='margin:0; color: {resumo['cor']}; font-size: 1.2em;'>STATUS: {resumo['nivel'].upper()}</h2>
-                <p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>"{resumo['desc']}"</p>
-                <hr style='border: 0.1px solid #333;'>
-                <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['msg']}</p>
-            </div>
-        """
-        st.markdown(html_card, unsafe_allow_html=True)
+        
+       card_html = "<div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid " + resumo['cor'] + ";'>"
+        card_html += "<h2 style='margin:0; color: " + resumo['cor'] + "; font-size: 1.2em;'>STATUS: " + resumo['nivel'].upper() + "</h2>"
+        card_html += "<p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>\"" + resumo['desc'] + "\"</p>"
+        card_html += "<hr style='border: 0.1px solid #333;'>"
+        card_html += "<p style='color: #aaa; font-size: 0.85em; font-style: italic;'>" + resumo['msg'] + "</p>"
+        card_html += "</div>"
+        
+        # Exibindo o card
+        st.markdown(card_html, unsafe_allow_html=True)
+
         progresso_val = min(pontos / resumo['proximo_pts'], 1.0) if resumo['proximo_pts'] > 0 else 1.0
         st.write("")
         st.progress(progresso_val)
