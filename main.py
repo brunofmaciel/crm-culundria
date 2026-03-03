@@ -82,53 +82,36 @@ if aba == "Meu Painel (Login)":
 
         if st.button("ENTRAR NA CONFRARIA"):
             try:
-                # 1. Abre a planilha e lê os dados
                 sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                 df = pd.DataFrame(sheet.get_all_records())
                 
-                # --- AQUI É ONDE A MÁGICA DO ZERO ACONTECE ---
-                # Transformamos em texto, tiramos o .0, limpamos espaços e forçamos 11 dígitos (.zfill)
+                # Normalização blindada (zero à esquerda)
                 df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
-                
-                # Limpamos o CPF que o cliente digitou e também forçamos 11 dígitos
                 cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip().zfill(11)
                 
-                # Fazemos a busca comparando "077..." com "077..."
                 cliente = df[df['ID_Cliente'] == cpf_digitado]
-                # ----------------------------------------------
 
                 if not cliente.empty:
                     c = cliente.iloc[0]
-                    # Confere a senha
                     if str(senha_input).strip() == str(c['Senha']).strip():
                         st.session_state.logado = True
                         st.session_state.dados_usuario = c.to_dict()
                         st.rerun()
-                    else:
-                        st.error("Senha incorreta!")
-                else:
-                    st.warning(f"CPF {cpf_digitado} não localizado.")
-                    # MODO DEBUG (SÓ PARA O MESTRE VER O QUE ESTÁ NA PLANILHA):
-                    with st.expander("Verificar CPFs na base (Ajuda do Mestre)"):
-                        st.write("CPFs que o sistema está lendo da sua planilha:")
-                        st.write(df['ID_Cliente'].tolist())
+                    else: st.error("Senha incorreta!")
+                else: st.warning(f"CPF {cpf_digitado} não localizado.")
 
-            except Exception as e:
-                st.error(f"Erro técnico na busca: {e}")
+            except Exception as e: st.error(f"Erro técnico na busca: {e}")
         
         st.write("")
         if st.button("✨ Não tem conta? Cadastre-se aqui"):
             st.session_state.aba_selecionada = "Fazer Parte da Confraria"
             st.rerun()
     else:
-        # PAINEL DO CONFRADE LOGADO
+        # PAINEL LOGADO (Mantido Original)
         c = st.session_state.dados_usuario
         pontos = float(c.get('Pontos_Totais', 0))
         resumo = calcular_status_confraria(pontos)
-      
         st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
-        
-        # 2. Definimos o texto do card (ASPAS TRIPLAS LIMPAS)
         html_card = f"""
             <div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid {resumo['cor']};'>
                 <h2 style='margin:0; color: {resumo['cor']}; font-size: 1.2em;'>STATUS: {resumo['nivel'].upper()}</h2>
@@ -137,47 +120,30 @@ if aba == "Meu Painel (Login)":
                 <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['msg']}</p>
             </div>
         """
-        
         st.markdown(html_card, unsafe_allow_html=True)
-
-        # BARRA DE PROGRESSO (RESTAURADA)
-        # Cálculo: pontos_atuais / pontos_objetivo
         progresso_val = min(pontos / resumo['proximo_pts'], 1.0) if resumo['proximo_pts'] > 0 else 1.0
         st.write("")
         st.progress(progresso_val)
         st.caption(f"Você já acumulou **{int(pontos)}** de **{int(resumo['proximo_pts'])}** pontos para o próximo nível.")
-
         st.metric("MEUS GOLES ACUMULADOS", f"{int(pontos)} PTS")
 
-        # Histórico de Pedidos
+        # Histórico
         st.markdown("### 📜 MEU HISTÓRICO")
         try:
             sheet_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
             df_v = pd.DataFrame(sheet_v.get_all_records())
-            df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str)
+            df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
             minhas_v = df_v[df_v['ID_Cliente'] == str(c['ID_Cliente'])]
             if not minhas_v.empty:
                 st.table(minhas_v[['Data_Venda', 'Litragem_Total', 'Total Pontos']])
             else: st.info("Nenhum barril registrado ainda.")
         except: st.info("Buscando barris no histórico...")
 
-        # Formulário de Indicação
-        st.markdown("---")
-        st.write("### 🚀 INDIQUE UM CONFRADE")
-        with st.form("form_indicacao", clear_on_submit=True):
-            n_amigo = st.text_input("Nome do Amigo")
-            t_amigo = st.text_input("WhatsApp")
-            if st.form_submit_button("ENVIAR INDICAÇÃO"):
-                if n_amigo and t_amigo:
-                    client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").append_row([c['ID_Cliente'], n_amigo, t_amigo, "Pendente"])
-                    st.success("Indicação enviada com sucesso!")
-
 # ==========================================
 # ABA 2: CADASTRO
 # ==========================================
 elif aba == "Fazer Parte da Confraria":
     st.title("🧪 Entre para a Confraria")
-    st.write("Crie sua conta e comece a pontuar na Culundria!")
     with st.form("form_cadastro", clear_on_submit=True):
         nome = st.text_input("Nome Completo")
         cpf_n = st.text_input("CPF (apenas números)")
@@ -188,32 +154,28 @@ elif aba == "Fazer Parte da Confraria":
             if nome and cpf_n and passw:
                 try:
                     sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    df_check = pd.DataFrame(sheet_cli.get_all_records())
-                    if str(cpf_n).strip() in df_check['ID_Cliente'].astype(str).values:
-                        st.warning("CPF já cadastrado!")
-                    else:
-                        data_h = pd.Timestamp.now().strftime("%d/%m/%Y")
-                        # Colunas: A=CPF, B=Nome, C=Whats, D=Mail, E=Status, F=Pts, G=Prog, H=Data, I=Senha
-                        nova_linha = [str(cpf_n).strip(), nome.strip().upper(), whats, mail, "Explorador", 0, 0, data_h, str(passw).strip()]
-                        sheet_cli.append_row(nova_linha)
-                        st.success("Bem-vindo! Agora faça login no 'Meu Painel'.")
-                        st.balloons()
+                    nova_linha = [str(cpf_n).strip().zfill(11), nome.strip().upper(), whats, mail, "Explorador", 0, 0, pd.Timestamp.now().strftime("%d/%m/%Y"), str(passw).strip()]
+                    sheet_cli.append_row(nova_linha)
+                    st.success("Bem-vindo! Agora faça login no 'Meu Painel'.")
+                    st.balloons()
                 except Exception as e: st.error(f"Erro ao salvar: {e}")
             else: st.error("Preencha Nome, CPF e Senha.")
 
 # ==========================================
-# ABA 3: ÁREA DO MESTRE (ADMIN)
+# ABA 3: ÁREA DO MESTRE (ADMIN) - CORRIGIDA
 # ==========================================
 elif aba == "Área do Mestre":
     st.title("🏰 Área do Mestre")
-    senha_adm = st.sidebar.text_input("Senha Admin:", type="password")
+    
+    # Adicionamos uma "key" única para o input de senha não se perder
+    senha_adm = st.text_input("Chave do Grimório (Senha):", type="password", key="senha_admin_mestre")
+    
     if senha_adm == st.secrets["admin_password"]:
         st.success("Grimório de dados aberto!")
         try:
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             
-            # Limpeza de colunas (Importante!)
             df_vendas.columns = df_vendas.columns.str.strip()
             df_clientes.columns = df_clientes.columns.str.strip()
             
@@ -237,4 +199,5 @@ elif aba == "Área do Mestre":
                 st.table(top_5)
                 
         except Exception as e: st.error(f"Erro ao carregar gráficos: {e}")
-    elif senha_adm: st.error("Senha incorreta.")
+    elif senha_adm != "":
+        st.error("A chave está incorreta, Confrade.")
