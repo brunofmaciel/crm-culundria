@@ -9,7 +9,7 @@ creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"],
 client = gspread.authorize(creds)
 
 # SUBSTITUA PELO NOME EXATO DA SUA PLANILHA
-URL_PLANILHA = "PROGRAMA FIDELIDADE" 
+URL_PLANILHA = "crm-culundria" 
 sheet = client.open(URL_PLANILHA).worksheet("CLIENTES")
 
 # 2. Interface do Alquimista
