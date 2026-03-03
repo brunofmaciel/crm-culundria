@@ -83,8 +83,7 @@ if cpf_input:
                 st.table(exibir_vendas) # Mostra uma tabela limpa
             else:
                 st.info("Ainda não constam barris registrados. Que tal pedir o próximo?")
-            except Exception as e:
-                st.error(f"Erro técnico no histórico: {e}")
-    
+  except Exception as e:
+            st.error(f"Erro técnico no histórico: {e}")
     else:
         st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
