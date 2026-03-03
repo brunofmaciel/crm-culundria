@@ -154,5 +154,19 @@ elif aba == "Quero ser Alquimista (Cadastro)":
                     if str(cpf_novo).strip() in df_check['ID_Cliente'].astype(str).values:
                         st.warning("CPF já cadastrado! Vá ao Portal do Cliente.")
                     else:
+                        # Pegamos a data atual
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
-                        nova_linha = [str(cpf_novo).strip(), nome.strip().upper(), whatsapp.strip(), email.strip().lower(), "Alquim
+
+                        # Certifique-se de que a linha abaixo esteja COMPLETA:
+                        nova_linha = [
+                            str(cpf_novo).strip(), 
+                            nome.strip().upper(), 
+                            whatsapp.strip(), 
+                            email.strip().lower(), 
+                            "Alquimista Aprendiz", 
+                            0, 
+                            0, 
+                            data_hoje
+                        ]
+                        
+                        sheet_cli.append_row(nova_linha)
