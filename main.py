@@ -135,7 +135,7 @@ if aba == "Meu Painel (Login)":
                 <p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>"{resumo['desc']}"</p>
                 <hr style='border: 0.1px solid #333;'>
                 <p style='color: #aaa; font-size: 0.85em; font-style: italic;'>{resumo['msg']}</p>
-            </div>"""
+            </div>
         """
         
         st.markdown(html_card, unsafe_allow_html=True)
