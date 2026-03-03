@@ -39,9 +39,25 @@ if cpf_input:
         st.header(f"Olá, {c['Nome_Completo']}!")
         st.subheader(f"Nível: {c['Nível_Atual']}")
         
-        progresso = float(c['Progresso_Copo']) if c['Progresso_Copo'] != "" else 0.0
-        st.write("Seu progresso para o próximo nível:")
+        # --- Cálculo Seguro do Progresso ---
+        try:
+            val_bruto = float(c['Progresso_Copo']) if str(c['Progresso_Copo']).strip() != "" else 0.0
+            
+            # Se o valor for maior que 1 (ex: 80), dividimos por 100 para virar 0.8
+            if val_bruto > 1.0:
+                val_bruto = val_bruto / 100.0
+            
+            # Garante que o valor fique entre 0.0 e 1.0 para não dar erro no Streamlit
+            progresso = min(max(val_bruto, 0.0), 1.0)
+            
+        except ValueError:
+            progresso = 0.0
+
+        # --- Exibição do Copo de Chopp ---
+        st.write("### Seu progresso para o próximo nível:")
         st.progress(progresso)
-        st.metric("Saldo de Pontos", f"{c['Pontos_Totais']} pts")
+        
+        # Mostra a porcentagem escrita para o cliente (ex: 85%)
+        st.caption(f"Você já completou **{int(progresso * 100)}%** do caminho!")
     else:
         st.warning("CPF não encontrado. Fale com a Culundria no WhatsApp!")
