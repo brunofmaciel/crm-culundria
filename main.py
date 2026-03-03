@@ -110,37 +110,39 @@ if aba == "Portal do Cliente":
 # ==========================================
 # ABA 2: PAINEL DO MESTRE (ADMIN)
 # ==========================================
-elif aba == "Painel do Mestre (Admin)":
-    st.title("🏰 Painel do Mestre Cervejeiro")
-    
-    senha = st.sidebar.text_input("Senha de Acesso:", type="password")
-    
-    if senha == st.secrets["admin_password"]:
-        st.success("Acesso autorizado, Bruno!")
-        
-        try:
+try:
+            # 1. Carrega os dados
             df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
             df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
             
-            # --- TRATAMENTO DE SEGURANÇA ---
-            # Força as colunas a serem numéricas. O que não for número vira 0.
-            df_vendas['Litragem_Total'] = pd.to_numeric(df_vendas['Litragem_Total'], errors='coerce').fillna(0)
-            df_clientes['Pontos_Totais'] = pd.to_numeric(df_clientes['Pontos_Totais'], errors='coerce').fillna(0)
+            # 2. LIMPEZA "ANTI-VÍRGULA" (O segredo para os 50 litros)
+            def limpar_numero(valor):
+                if isinstance(valor, str):
+                    valor = valor.replace('.', '') # Remove ponto de milhar (ex: 1.000 -> 1000)
+                    valor = valor.replace(',', '.') # Troca vírgula por ponto decimal (ex: 50,5 -> 50.5)
+                return pd.to_numeric(valor, errors='coerce')
 
-            # --- 1. MÉTRICAS RÁPIDAS (KPIs) ---
+            df_vendas['Litragem_Total'] = df_vendas['Litragem_Total'].apply(limpar_numero).fillna(0)
+            df_clientes['Pontos_Totais'] = df_clientes['Pontos_Totais'].apply(limpar_numero).fillna(0)
+
+            # --- 3. MÉTRICAS RÁPIDAS (KPIs) ---
             st.subheader("📊 Resumo de Operação")
             c1, c2, c3 = st.columns(3)
             
-            total_litros = df_vendas['Litragem_Total'].sum()
+            # Filtramos para não somar nenhuma linha que possa ser um "Total" escrito na planilha
+            # (Geralmente IDs de pedido são números, se for texto como "TOTAL", a gente ignora)
+            vendas_reais = df_vendas[df_vendas['Litragem_Total'] > 0]
+            total_litros = vendas_reais['Litragem_Total'].sum()
             num_clientes = len(df_clientes)
             
             with c1:
-                st.metric("Total Litros", f"{total_litros:,.0f} L".replace(",", "."))
+                # Mostra o número limpo. Se for 50, aparecerá 50.
+                st.metric("Total Litros", f"{total_litros:,.1f} L".replace(",", "X").replace(".", ",").replace("X", "."))
             with c2:
                 st.metric("Clientes", num_clientes)
             with c3:
                 media = total_litros / num_clientes if num_clientes > 0 else 0
-                st.metric("Média/Cli", f"{media:.1f} L")
+                st.metric("Média/Cli", f"{media:.1f} L".replace(".", ","))
 
             # Ranking
             st.subheader("🏆 Top 5 Maiores Consumidores")
