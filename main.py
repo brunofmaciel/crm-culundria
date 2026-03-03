@@ -84,17 +84,34 @@ if aba == "Meu Painel (Login)":
             try:
                 sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                 df = pd.DataFrame(sheet.get_all_records())
-                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.strip()
-                cliente = df[df['ID_Cliente'] == cpf_input.strip()]
+                
+                # --- NORMALIZAÇÃO BLINDADA DO CPF ---
+                # 1. Transforma a coluna da planilha em texto, remove o ".0" (se houver) e limpa espaços
+                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+                
+                # 2. Limpa o que o usuário digitou
+                cpf_digitado = str(cpf_input).strip()
+                
+                # 3. Faz a busca
+                cliente = df[df['ID_Cliente'] == cpf_digitado]
+
                 if not cliente.empty:
                     c = cliente.iloc[0]
+                    # Confere a senha ignorando espaços
                     if str(senha_input).strip() == str(c['Senha']).strip():
                         st.session_state.logado = True
                         st.session_state.dados_usuario = c.to_dict()
                         st.rerun()
-                    else: st.error("Senha incorreta!")
-                else: st.warning("CPF não cadastrado.")
-            except Exception as e: st.error(f"Erro no login: {e}")
+                    else:
+                        st.error("Senha incorreta!")
+                else:
+                    # Se não encontrar, mostramos um aviso técnico discreto para ajudar você a testar
+                    st.warning(f"CPF {cpf_digitado} não localizado na base de dados.")
+                    # DICA PARA O MESTRE: Descomente a linha abaixo para ver o que o Python está lendo da planilha:
+                    # st.write("CPFs lidos:", df['ID_Cliente'].tolist()) 
+            
+            except Exception as e:
+                st.error(f"Erro ao acessar o banco de dados: {e}")
         
         st.write("")
         if st.button("✨ Não tem conta? Cadastre-se aqui"):
@@ -217,4 +234,3 @@ elif aba == "Área do Mestre":
                 
         except Exception as e: st.error(f"Erro ao carregar gráficos: {e}")
     elif senha_adm: st.error("Senha incorreta.")
-    
