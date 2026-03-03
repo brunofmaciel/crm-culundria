@@ -3,7 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
-# 1. CONFIGURAÇÃO DA PÁGINA (Deve ser a primeira linha de código)
+# 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
 # --- ESTILO PREMIUM CULUNDRIA ---
@@ -16,7 +16,6 @@ st.markdown("""
     h1, h2, h3, h4 { color: #ffffff !important; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .stButton>button { width: 100%; border-radius: 5px; background-color: #e68a00; color: white; font-weight: bold; border: none; padding: 0.6rem; text-transform: uppercase; transition: 0.3s; }
     .stButton>button:hover { background-color: #ff9f00; box-shadow: 0 0 15px #e68a00; }
-    .stProgress > div > div > div > div { background-image: linear-gradient(to right, #e68a00, #ffcc33); }
     .stTable { background-color: #161b3d; border-radius: 10px; color: white; }
     </style>
     """, unsafe_allow_html=True)
@@ -34,119 +33,73 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
-# --- FUNÇÃO DE NÍVEIS DA CONFRARIA ---
+# --- FUNÇÃO DE NÍVEIS DA CONFRARIA (GOLES DE VANTAGEM) ---
 def calcular_status_confraria(pontos):
-    try:
-        p = float(pontos)
-    except:
-        p = 0.0
-        
+    try: p = float(pontos)
+    except: p = 0.0
     if p <= 500:
-        return {
-            "nivel": "Explorador",
-            "desc": "Você está descobrindo novos horizontes. Cada gole é uma nova experiência!",
-            "cor": "#a8dadc",
-            "proximo": f"Faltam {501 - p:.0f} pontos para ser 'Chegado'."
-        }
+        return {"nivel": "Explorador", "desc": "Você está descobrindo novos horizontes.", "cor": "#a8dadc", "proximo": f"Faltam {501 - p:.0f} pts para 'Chegado'."}
     elif p <= 1000:
-        return {
-            "nivel": "Chegado",
-            "desc": "A casa já é sua! Você já conhece o caminho das torneiras e o nosso balcão te reconhece.",
-            "cor": "#e68a00",
-            "proximo": f"Faltam {1001 - p:.0f} pontos para ser 'Tarimbado'."
-        }
+        return {"nivel": "Chegado", "desc": "A casa já é sua! O balcão te reconhece.", "cor": "#e68a00", "proximo": f"Faltam {1001 - p:.0f} pts para 'Tarimbado'."}
     elif p <= 2000:
-        return {
-            "nivel": "Tarimbado",
-            "desc": "Veterano de guerra! Seu paladar já viveu grandes histórias com nossos rótulos.",
-            "cor": "#d4a017",
-            "proximo": f"Faltam {2001 - p:.0f} pontos para ser 'Patrimônio'."
-        }
+        return {"nivel": "Tarimbado", "desc": "Veterano de guerra! Grandes histórias conosco.", "cor": "#d4a017", "proximo": f"Faltam {2001 - p:.0f} pts para 'Patrimônio'."}
     else:
-        return {
-            "nivel": "Patrimônio da Culundria",
-            "desc": "Você não é mais cliente, é parte da nossa história. Seu lugar no balcão é sagrado.",
-            "cor": "#ffcc33",
-            "proximo": "Você atingiu o topo da Confraria! 🍻"
-        }
+        return {"nivel": "Patrimônio da Culundria", "desc": "Você é parte da nossa história sagrada.", "cor": "#ffcc33", "proximo": "Você atingiu o topo! 🍻"}
 
 # --- 3. LÓGICA DE NAVEGAÇÃO ---
 opcoes_menu = ["Meu Painel (Login)", "Fazer Parte da Confraria", "Área do Mestre"]
 
 if "aba_selecionada" not in st.session_state or st.session_state.aba_selecionada not in opcoes_menu:
     st.session_state.aba_selecionada = "Meu Painel (Login)"
-
 if "logado" not in st.session_state:
     st.session_state.logado = False
 
 indice_atual = opcoes_menu.index(st.session_state.aba_selecionada)
 
 with st.sidebar:
-    try:
-        st.image("logoculundria.png", use_container_width=True)
-    except:
-        st.warning("Logo não encontrada.")
-    st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
-    st.write("📍 Cruzília, MG")
-    st.markdown("---")
-    aba = st.sidebar.radio("Ir para:", opcoes_menu, index=indice_atual)
+    try: st.image("logoculundria.png", use_container_width=True)
+    except: st.warning("Logo não encontrada.")
+    st.markdown("<h2 style='text-align: center;'>Culundria</h2>", unsafe_allow_html=True)
+    aba = st.sidebar.radio("Navegação:", opcoes_menu, index=indice_atual)
     st.session_state.aba_selecionada = aba
-    
     if st.session_state.logado:
-        if st.button("Sair / Logoff"):
+        if st.button("SAIR DA CONFRARIA"):
             st.session_state.logado = False
             st.rerun()
 
 # ==========================================
-# ABA 1: MEU PAINEL (LOGIN E DASHBOARD)
+# ABA 1: LOGIN E PAINEL DO CLIENTE
 # ==========================================
 if aba == "Meu Painel (Login)":
     if not st.session_state.logado:
-        st.title("🍺 Culundria Confraria")
-        st.write("Entre para ver seus Goles de Vantagem.")
-        
+        st.title("🍺 Goles de Vantagem")
         col_l1, col_l2 = st.columns(2)
-        with col_l1:
-            cpf_input = st.text_input("CPF (apenas números):", key="login_cpf")
-        with col_l2:
-            senha_input = st.text_input("Senha:", type="password", key="login_senha")
+        with col_l1: cpf_input = st.text_input("CPF (apenas números):")
+        with col_l2: senha_input = st.text_input("Senha:", type="password")
 
-        if st.button("ENTRAR NO PAINEL"):
-            if cpf_input and senha_input:
-                try:
-                    sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    df = pd.DataFrame(sheet.get_all_records())
-                    df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.strip()
-                    cliente = df[df['ID_Cliente'] == cpf_input.strip()]
-
-                    if not cliente.empty:
-                        c = cliente.iloc[0]
-                        if str(senha_input).strip() == str(c['Senha']).strip():
-                            st.session_state.logado = True
-                            st.session_state.dados_usuario = c.to_dict()
-                            st.rerun()
-                        else:
-                            st.error("Senha incorreta!")
-                    else:
-                        st.warning("CPF não cadastrado.")
-                except Exception as e:
-                    st.error(f"Erro ao carregar dados: {e}")
-            else:
-                st.error("Preencha CPF e Senha.")
+        if st.button("ENTRAR NA CONFRARIA"):
+            try:
+                sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                df = pd.DataFrame(sheet.get_all_records())
+                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.strip()
+                cliente = df[df['ID_Cliente'] == cpf_input.strip()]
+                if not cliente.empty:
+                    c = cliente.iloc[0]
+                    if str(senha_input).strip() == str(c['Senha']).strip():
+                        st.session_state.logado = True
+                        st.session_state.dados_usuario = c.to_dict()
+                        st.rerun()
+                    else: st.error("Senha incorreta!")
+                else: st.warning("CPF não cadastrado.")
+            except Exception as e: st.error(f"Erro: {e}")
         
-        st.markdown("---")
-        if st.button("✨ Ainda não faz parte? Cadastre-se aqui"):
+        if st.button("✨ Não tem conta? Cadastre-se"):
             st.session_state.aba_selecionada = "Fazer Parte da Confraria"
             st.rerun()
-
     else:
-        # PAINEL DO USUÁRIO LOGADO
         c = st.session_state.dados_usuario
-        pontos = c.get('Pontos_Totais', c.get('Total Pontos', 0))
-        resumo = calcular_status_confraria(pontos)
-        
+        resumo = calcular_status_confraria(c.get('Pontos_Totais', 0))
         st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
-        
         html_card = f"""
             <div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid {resumo['cor']};'>
                 <h2 style='margin:0; color: {resumo['cor']}; font-size: 1.2em;'>STATUS: {resumo['nivel'].upper()}</h2>
@@ -156,3 +109,52 @@ if aba == "Meu Painel (Login)":
             </div>
         """
         st.markdown(html_card, unsafe_allow_html=True)
+        st.metric("MEUS GOLES ACUMULADOS", f"{c.get('Pontos_Totais', 0)} PTS")
+
+# ==========================================
+# ABA 2: CADASTRO
+# ==========================================
+elif aba == "Fazer Parte da Confraria":
+    st.title("🧪 Entre para a Confraria")
+    with st.form("form_cadastro", clear_on_submit=True):
+        nome = st.text_input("Nome Completo")
+        cpf_n = st.text_input("CPF (apenas números)")
+        whats = st.text_input("WhatsApp")
+        mail = st.text_input("E-mail")
+        passw = st.text_input("Crie uma Senha", type="password")
+        if st.form_submit_button("CRIAR MINHA CONTA"):
+            if nome and cpf_n and passw:
+                try:
+                    sheet_cli = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    # A=CPF, B=Nome, C=Whats, D=Mail, E=Status, F=Pts, G=Prog, H=Data, I=Senha
+                    nova_linha = [str(cpf_n).strip(), nome.strip().upper(), whats, mail, "Explorador", 0, 0, pd.Timestamp.now().strftime("%d/%m/%Y"), str(passw).strip()]
+                    sheet_cli.append_row(nova_linha)
+                    st.success("Bem-vindo! Agora faça login no 'Meu Painel'.")
+                    st.balloons()
+                except Exception as e: st.error(f"Erro ao salvar: {e}")
+            else: st.error("Preencha Nome, CPF e Senha.")
+
+# ==========================================
+# ABA 3: ÁREA DO MESTRE (ADMIN)
+# ==========================================
+elif aba == "Área do Mestre":
+    st.title("🏰 Área do Mestre")
+    senha_adm = st.sidebar.text_input("Senha Admin:", type="password")
+    if senha_adm == st.secrets["admin_password"]:
+        try:
+            df_vendas = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
+            df_clientes = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("CLIENTES").get_all_records())
+            
+            st.subheader("📊 Resumo da Brassagem")
+            c1, c2 = st.columns(2)
+            c1.metric("Litragem Total", f"{df_vendas['Litragem_Total'].sum():.1f} L")
+            c2.metric("Total de Confrades", len(df_clientes))
+            
+            st.subheader("🍺 Estilos mais pedidos")
+            if 'Estilo Chopp' in df_vendas.columns:
+                st.bar_chart(df_vendas.groupby('Estilo Chopp')['Litragem_Total'].sum())
+            
+            st.subheader("🏆 Top Confrades")
+            st.table(df_clientes.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']])
+        except Exception as e: st.error(f"Erro no Admin: {e}")
+    elif senha_adm: st.error("Senha incorreta.")
