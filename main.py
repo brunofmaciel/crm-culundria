@@ -96,7 +96,7 @@ with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Culundria Cervejaria</h2>", unsafe_allow_html=True)
     st.write("📍 Cruzília, MG")
     st.markdown("---")
-    aba = st.sidebar.radio("Ir para:", ["Portal do Cliente", "Painel do Mestre (Admin)"])
+    aba = st.sidebar.radio("Ir para:", ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"])
 
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
@@ -115,7 +115,6 @@ if aba == "Portal do Cliente":
 
             if not cliente.empty:
                 c = cliente.iloc[0]
-                st.balloons()
 
                 # --- 2. CÁLCULO DO PROGRESSO (PRECISA VIR AQUI!) ---
                 try:
