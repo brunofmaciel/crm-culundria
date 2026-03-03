@@ -188,7 +188,7 @@ if aba == "Portal do Cliente":
 # ==========================================
 # NOVO: ABA DE CADASTRO
 # ==========================================
-elif aba = "Quero ser Alquimista (Cadastro)":
+elif aba == "Quero ser Alquimista (Cadastro)":
     st.title("🧪 Inicie sua Jornada Alquímica")
     st.write("Preencha os dados abaixo para começar a acumular pontos na Culundria!")
 
