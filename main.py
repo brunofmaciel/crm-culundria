@@ -34,9 +34,15 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
-# 3. LÓGICA DE NAVEGAÇÃO ÚNICA
-if "menu_radio" not in st.session_state:
-    st.session_state.menu_radio = "Portal do Cliente"
+# --- 3. LÓGICA DE NAVEGAÇÃO (ESTRUTURA LIMPA) ---
+opcoes_menu = ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"]
+
+# Se for a primeira vez, começamos no Portal
+if "aba_selecionada" not in st.session_state:
+    st.session_state.aba_selecionada = "Portal do Cliente"
+
+# Descobrimos qual o número (0, 1 ou 2) da aba atual para o rádio saber onde marcar
+indice_atual = opcoes_menu.index(st.session_state.aba_selecionada)
 
 with st.sidebar:
     try:
@@ -48,12 +54,14 @@ with st.sidebar:
     st.write("📍 Cruzília, MG")
     st.markdown("---")
     
-    # Criamos o rádio vinculado diretamente à chave 'menu_radio'
+    # IMPORTANTE: O rádio NÃO tem 'key' aqui, ele é controlado pelo 'index'
     aba = st.sidebar.radio(
         "Ir para:", 
-        ["Portal do Cliente", "Quero ser Alquimista (Cadastro)", "Painel do Mestre (Admin)"],
-        key="menu_radio"
+        opcoes_menu, 
+        index=indice_atual
     )
+    # Atualizamos a memória com o que o usuário clicou no menu
+    st.session_state.aba_selecionada = aba
 
 # ==========================================
 # ABA 1: PORTAL DO CLIENTE
@@ -62,11 +70,14 @@ if aba == "Portal do Cliente":
     st.title("🍺 Portal do Alquimista")
     cpf_input = st.text_input("Digite seu CPF (apenas números):")
 
-    # --- O BOTÃO QUE MUDA A ABA ---
+    # --- O BOTÃO DE "PULO" ---
     st.write("") 
     if st.button("✨ Ainda não é um Alquimista? Cadastre-se aqui"):
-        st.session_state.menu_radio = "Quero ser Alquimista (Cadastro)"
+        # Aqui mudamos a variável e damos o rerun. O rádio vai ler o novo índice sozinho!
+        st.session_state.aba_selecionada = "Quero ser Alquimista (Cadastro)"
         st.rerun()
+
+    # ... Resto do seu código do CPF (if cpf_input:) ...
 
     if cpf_input:
         try:
