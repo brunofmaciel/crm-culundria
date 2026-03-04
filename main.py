@@ -109,6 +109,25 @@ if aba == "Meu Painel (Login)":
         st.write("")
         st.progress(min(pts_t / res['proximo_pts'], 1.0) if res['proximo_pts'] > 0 else 1.0)
 
+# Dentro da aba "Meu Painel", na parte de Login:
+with st.form("login_confraria"):
+    cpf_login = st.text_input("CPF")
+    senha_login = st.text_input("Senha", type="password")
+    botao_entrar = st.form_submit_button("ENTRAR")
+
+# --- NOVO BLOCO DE RECUPERAÇÃO ---
+st.write("---")
+if st.button("Esqueci minha senha"):
+    if cpf_login:
+        # Link do seu WhatsApp com mensagem pré-definida
+        seu_numero = "55XXXXXXXXXXX" # <--- COLOQUE SEU WHATSAPP AQUI (com DDD)
+        mensagem = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
+        link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(mensagem)}"
+        
+        st.info("Clique no botão abaixo para solicitar sua senha ao Mestre via WhatsApp:")
+        st.link_button("📩 SOLICITAR SENHA NO WHATSAPP", link_zap)
+    else:
+        st.warning("⚠️ Por favor, digite seu CPF no campo acima para que eu possa identificar você.")
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS
 # ==========================================
