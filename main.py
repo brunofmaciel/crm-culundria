@@ -71,56 +71,36 @@ with st.sidebar:
 
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
-# ==========================================
-if aba == "Meu Painel (Login)":
+# ==========================================# --- ABA: MEU PAINEL (LOGIN) ---
+elif aba == "Meu Painel":
     if not st.session_state.logado:
-        st.title("🍺 Goles de Vantagem")
-        c1, c2 = st.columns(2)
-        with c1: cpf_input = st.text_input("CPF (apenas números):")
-        with c2: senha_input = st.text_input("Senha:", type="password")
+        st.title("🍺 Acesso à Confraria")
+        
+        # Criamos o formulário
+        with st.form("login_confraria"):
+            cpf_login = st.text_input("Digite seu CPF (apenas números)")
+            senha_login = st.text_input("Sua Senha", type="password")
+            botao_entrar = st.form_submit_button("ENTRAR NA CONFRARIA")
+            
+            if botao_entrar:
+                # Lógica de login (sua busca na planilha CLIENTES aqui)
+                # ... (verificação de senha) ...
+                pass
 
-        if st.button("ENTRAR NA CONFRARIA"):
-            try:
-                sh = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                df = pd.DataFrame(sh.get_all_records())
-                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
-                cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip().zfill(11)
+        # --- RECUPERAÇÃO DE SENHA (FORA DO FORMULÁRIO) ---
+        st.write("---")
+        if st.button("Esqueci minha senha"):
+            # O truque: verificamos se o usuário digitou algo no campo acima
+            if cpf_login and len(cpf_login) >= 11:
+                import urllib.parse
+                seu_numero = "55XXXXXXXXXXX" # <--- SEU WHATSAPP AQUI
+                msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
+                link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
                 
-                cliente = df[df['ID_Cliente'] == cpf_digitado]
-                if not cliente.empty and str(senha_input).strip() == str(cliente.iloc[0]['Senha']).strip():
-                    st.session_state.logado = True
-                    st.session_state.dados_usuario = cliente.iloc[0].to_dict()
-                    st.rerun()
-                else: st.error("Dados incorretos.")
-            except Exception as e: st.error(f"Erro: {e}")
-    else:
-        u = st.session_state.dados_usuario
-        pts_t = float(u.get('Pontos_Totais', 0))
-        saldo = float(u.get('Saldo_Atual', pts_t))
-        res = calcular_status_confraria(pts_t)
-        
-        st.title(f"OLÁ, {str(u['Nome_Completo']).split()[0].upper()}! 🍻")
-        
-        col1, col2 = st.columns(2)
-        col1.metric("PONTOS TOTAIS", f"{int(pts_t)} PTS")
-        col2.metric("SALDO LOJA", f"{int(saldo)} PTS")
-
-        st.markdown(f"<div style='background-color: #161b3d; padding: 20px; border-radius: 15px; border-left: 8px solid {res['cor']};'><h3>STATUS: {res['nivel'].upper()}</h3><p>{res['desc']}</p></div>", unsafe_allow_html=True)
-        st.write("")
-        st.progress(min(pts_t / res['proximo_pts'], 1.0) if res['proximo_pts'] > 0 else 1.0)
-
-st.write("---")
-if st.button("Esqueci minha senha"):
-    if cpf_login:
-        # Link do seu WhatsApp com mensagem pré-definida
-        seu_numero = "5535998732583" # <--- COLOQUE SEU WHATSAPP AQUI (com DDD)
-        mensagem = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
-        link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(mensagem)}"
-        
-        st.info("Clique no botão abaixo para solicitar sua senha ao Mestre via WhatsApp:")
-        st.link_button("📩 SOLICITAR SENHA NO WHATSAPP", link_zap)
-    else:
-        st.warning("⚠️ Por favor, digite seu CPF no campo acima para que eu possa identificar você.")
+                st.info("Clique no botão abaixo para falar com o Mestre:")
+                st.link_button("📩 SOLICITAR SENHA VIA WHATSAPP", link_zap)
+            else:
+                st.warning("⚠️ Digite seu CPF no campo de login acima primeiro para que eu possa te identificar.")
 
 
 # ==========================================
