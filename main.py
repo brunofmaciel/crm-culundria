@@ -95,47 +95,57 @@ if aba == "Meu Painel":
         st.title("🍺 Acesso à Confraria")
         # ... (seu código de login e formulário) ...
         
-    else:
+   else:
+        # Pega os dados da sessão
         u = st.session_state.dados_usuario
-        cpf_logado = str(u['ID_Cliente'])
+        cpf_logado = str(u['ID_Cliente']).strip()
         
-        # 1. BUSCA HISTÓRICO DE VENDAS (Lógica de Inatividade)
+        # 1. BUSCA HISTÓRICO DE VENDAS (Com tratamento de erro reforçado)
+        dias_inatividade = 0
+        minhas_vendas = pd.DataFrame()
+        
         try:
             sh = client.open(NOME_PLANILHA)
             aba_vendas = sh.worksheet("VENDAS")
             df_vendas = pd.DataFrame(aba_vendas.get_all_records())
             
-            minhas_vendas = df_vendas[df_vendas['ID_Cliente'].astype(str) == cpf_logado].copy()
-            minhas_vendas['Data_Venda'] = pd.to_datetime(minhas_vendas['Data_Venda'], dayfirst=True)
-            
-            if not minhas_vendas.empty:
-                ultima_data = minhas_vendas['Data_Venda'].max()
-                dias_inatividade = (pd.Timestamp.now() - ultima_data).days
-            else:
-                dias_inatividade = 0 
-                ultima_data = None
-        except:
-            dias_inatividade = 0
-            minhas_vendas = pd.DataFrame()
+            if not df_vendas.empty:
+                # Garante que ID_Cliente seja string para comparar
+                df_vendas['ID_Cliente'] = df_vendas['ID_Cliente'].astype(str).str.strip()
+                minhas_vendas = df_vendas[df_vendas['ID_Cliente'] == cpf_logado].copy()
+                
+                if not minhas_vendas.empty:
+                    # errors='coerce' transforma datas erradas em NaT (não trava o código)
+                    minhas_vendas['Data_Venda'] = pd.to_datetime(minhas_vendas['Data_Venda'], dayfirst=True, errors='coerce')
+                    # Remove linhas onde a data falhou na conversão
+                    minhas_vendas = minhas_vendas.dropna(subset=['Data_Venda'])
+                    
+                    if not minhas_vendas.empty:
+                        ultima_data = minhas_vendas['Data_Venda'].max()
+                        dias_inatividade = (pd.Timestamp.now() - ultima_data).days
+        except Exception as e:
+            # Se der erro na busca, o painel continua carregando, apenas sem o histórico
+            st.sidebar.error(f"Erro no histórico: {e}")
 
         # 2. CABEÇALHO E MÉTRICAS
         st.title(f"🍻 Painel do Confrade")
-        status_info = calcular_status_confraria(u['Saldo_Atual'])
+        
+        # Cálculo do Status (Garante que u['Saldo_Atual'] exista)
+        saldo_p = u.get('Saldo_Atual', 0)
+        status_info = calcular_status_confraria(saldo_p)
         
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.metric("Saldo Atual", f"{int(u['Saldo_Atual'])} 🍺")
+            st.metric("Saldo Atual", f"{int(saldo_p)} 🍺")
         with c2:
             st.metric("Nível", status_info['nivel'])
         with c3:
             st.metric("Inatividade", f"{dias_inatividade} dias")
 
-        # --- 3. BARRA DE PROGRESSO (A QUE ESTAVA FALTANDO) ---
+        # 3. BARRA DE PROGRESSO
         st.write(f"**Status:** {status_info['desc']}")
-        # Calcula quanto falta para o próximo nível (máximo 1.0 ou 100%)
-        # Se o próximo_pts for o saldo atual (nível máximo), a barra fica cheia
-        limite_pts = status_info['proximo_pts'] if status_info['proximo_pts'] > 0 else 1
-        progresso = min(float(u['Saldo_Atual']) / limite_pts, 1.0)
+        limite = status_info['proximo_pts'] if status_info['proximo_pts'] > 0 else 1
+        progresso = min(float(saldo_p) / limite, 1.0)
         
         st.progress(progresso)
         st.caption(f"💡 {status_info['msg']}")
@@ -143,24 +153,29 @@ if aba == "Meu Painel":
         # 4. ALERTA DE EXPIRAÇÃO
         dias_para_expirar = 365 - dias_inatividade
         if dias_para_expirar <= 30:
-            st.warning(f"⚠️ **Atenção:** Seus pontos expiram em {dias_para_expirar} dias! Peça um barril para renovar.")
+            st.warning(f"⚠️ **Atenção:** Seus pontos expiram em {dias_para_expirar} dias! Peça um barril.")
         else:
             st.info(f"✅ Pontos garantidos por mais {dias_para_expirar} dias.")
 
         # 5. EXTRATO DE CONSUMO
         st.write("---")
         st.subheader("🛢️ Meus Barris Consumidos")
+        
         if not minhas_vendas.empty:
-            extrato = minhas_vendas[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']].copy()
-            extrato['Data_Venda'] = extrato['Data_Venda'].dt.strftime('%d/%m/%Y')
-            extrato.columns = ['Data', 'Estilo', 'Litros', 'Goles']
-            st.dataframe(extrato.sort_index(ascending=False), use_container_width=True, hide_index=True)
+            try:
+                # Usa nomes exatos da sua planilha
+                extrato = minhas_vendas[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']].copy()
+                extrato['Data_Venda'] = extrato['Data_Venda'].dt.strftime('%d/%m/%Y')
+                extrato.columns = ['Data', 'Estilo', 'Litros', 'Goles']
+                st.table(extrato.sort_index(ascending=False))
+            except:
+                st.write("Erro ao formatar histórico, mas seu saldo está seguro!")
         else:
             st.write("Nenhum barril registrado ainda. Bora pedir um?")
 
-        # --- 6. BOTÃO DE SAIR (LOGOUT) ---
+        # 6. BOTÃO DE SAIR
         st.write("")
-        if st.button("🚪 ENCERRAR SESSÃO", use_container_width=True):
+        if st.button("🚪 ENCERRAR SESSÃO", key="btn_logout_final"):
             st.session_state.logado = False
             st.session_state.dados_usuario = None
             st.rerun()
