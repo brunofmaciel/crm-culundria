@@ -3,6 +3,7 @@ import gspread
 import random  # <--- ADICIONE ESTE
 import string  # <--- ADICIONE ESTE
 import pandas as pd
+import urllib.parse
 from google.oauth2.service_account import Credentials
 
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
@@ -116,6 +117,8 @@ elif aba == "Loja de Souvenirs":
     if not st.session_state.logado:
         st.warning("Faça login para acessar a loja!")
     else:
+        import urllib.parse  # Garante que o link do QR Code seja gerado corretamente
+        
         c = st.session_state.dados_usuario
         saldo = float(c.get('Saldo_Atual', c.get('Pontos_Totais', 0)))
         st.subheader(f"Seu Saldo: {int(saldo)} Goles")
@@ -132,12 +135,11 @@ elif aba == "Loja de Souvenirs":
             with cols[i % 2]:
                 st.markdown(f"<div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border: 1px solid #e68a00;'><h3>{p['img']} {p['nome']}</h3><p>{p['pontos']} Goles</p></div>", unsafe_allow_html=True)
                 
-                # LÓGICA DO BOTÃO COM VOUCHER
                 if saldo >= p['pontos']:
                     if st.button(f"Resgatar {p['nome']}", key=f"btn_loja_{i}"):
                         voucher = gerar_codigo()
                         try:
-                            # Tenta salvar na aba RESGATES
+                            # 1. Tenta salvar na aba RESGATES
                             aba_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
                             aba_r.append_row([
                                 voucher, 
@@ -148,18 +150,27 @@ elif aba == "Loja de Souvenirs":
                                 "Pendente"
                             ])
                             
-                            # Mostra o comprovante visual para o cliente
+                            # 2. Gera o Link e o QR Code
+                            # ATENÇÃO: Substitua o link abaixo pelo link real do seu app no Streamlit
+                            url_app = "https://crm-culundria.streamlit.app/" 
+                            link_resgate = f"{url_app}?voucher={voucher}"
+                            qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_resgate)}"
+                            
+                            # 3. Mostra o comprovante visual com QR Code
                             st.success("Resgate realizado com sucesso!")
+                            
                             st.markdown(f"""
-                                <div style='text-align: center; background-color: #e68a00; padding: 20px; border-radius: 15px; color: white;'>
-                                    <p style='margin:0;'>APRESENTE NO BALCÃO:</p>
-                                    <h1 style='margin:0; font-size: 3em;'>{voucher}</h1>
-                                    <p style='margin:0;'>{p['nome']}</p>
+                                <div style='text-align: center; background-color: #ffffff; padding: 20px; border-radius: 15px; border: 5px solid #e68a00;'>
+                                    <p style='color: #0b0e27; font-weight: bold; margin-bottom: 10px;'>APRESENTE NO BALCÃO</p>
+                                    <img src='{qr_url}' style='width: 180px; margin-bottom: 10px;'>
+                                    <h1 style='color: #0b0e27; margin: 0; font-size: 2.5em;'>{voucher}</h1>
+                                    <p style='color: #444; margin: 0;'>{p['nome']}</p>
                                 </div>
                             """, unsafe_allow_html=True)
+                            
                             st.balloons()
                         except Exception as e:
-                            st.error(f"Erro ao registrar resgate: {e}. Verifique se a aba 'RESGATES' existe.")
+                            st.error(f"Erro ao registrar resgate: {e}")
                 else:
                     st.button("Saldo Insuficiente", key=f"btn_loja_{i}", disabled=True)
 # ==========================================
@@ -185,34 +196,44 @@ elif aba == "Fazer Parte da Confraria":
 elif aba == "Área do Mestre":
     st.title("🏰 Gestão Culundria")
     
-    # Pedimos a senha apenas UMA VEZ
+    # 1. Autenticação Única
     senha_adm = st.text_input("Chave do Grimório:", type="password", key="mestre_unica_pwd")
     
     if senha_adm == st.secrets["admin_password"]:
         st.success("Acesso autorizado, Mestre!")
         
-        # Criamos as ABAS para organizar o trabalho
+        # 2. Criação das Abas ANTES de usá-las
         tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
         
-        # --- LÓGICA DE CARREGAMENTO DE DADOS (Carrega uma vez para todas as abas) ---
         try:
+            # 3. Carregamento de Dados (Geral para todas as abas)
             sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
             df_v = pd.DataFrame(sh_v.get_all_records())
             
             sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
             df_c = pd.DataFrame(sh_c.get_all_records())
             
-            # Limpeza rápida
+            # Limpeza e Conversão
             df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
             df_c['Pontos_Totais'] = pd.to_numeric(df_c['Pontos_Totais'], errors='coerce').fillna(0)
             df_c['Saldo_Atual'] = pd.to_numeric(df_c['Saldo_Atual'], errors='coerce').fillna(0)
 
-            # --- ABA 1: VALIDAÇÃO DE VOUCHER (PARA O ATENDENTE) ---
+            # --- ABA 1: VALIDAÇÃO DE VOUCHER (Otimizada para QR Code) ---
             with tab_balcao:
                 st.subheader("🏁 Validação de Resgate")
-                cod_v = st.text_input("Código do Voucher:", placeholder="Ex: V-A1B2").upper().strip()
                 
-                if st.button("VERIFICAR E DAR BAIXA"):
+                # Captura automática do link do QR Code
+                params = st.query_params
+                voucher_url = params.get("voucher", "")
+                
+                cod_v = st.text_input(
+                    "Código do Voucher:", 
+                    value=voucher_url, 
+                    placeholder="Ex: V-A1B2",
+                    key="input_voucher_mestre"
+                ).upper().strip()
+                
+                if st.button("VERIFICAR E DAR BAIXA", key="btn_baixa_voucher"):
                     if cod_v:
                         sh_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
                         data_r = sh_r.get_all_values()
@@ -224,14 +245,17 @@ elif aba == "Área do Mestre":
                             idx = v_linha.index[0] + 2
                             if v_linha.iloc[0]['Status'] == "Pendente":
                                 sh_r.update_cell(idx, 6, "Entregue")
-                                st.success(f"✅ VÁLIDO! Entregar: {v_linha.iloc[0]['Produto']}")
+                                st.success(f"✅ VOUCHER VÁLIDO! Entregar: **{v_linha.iloc[0]['Produto']}**")
                                 st.balloons()
+                                st.query_params.clear() # Limpa a URL após sucesso
                             else:
-                                st.error("❌ Este voucher já foi utilizado!")
+                                st.error("❌ Este voucher já foi utilizado anteriormente!")
                         else:
-                            st.error("❓ Código não encontrado.")
+                            st.error("❓ Código não encontrado ou inválido.")
+                    else:
+                        st.warning("Insira um código de voucher.")
 
-            # --- ABA 2: RELATÓRIOS (PARA VOCÊ) ---
+            # --- ABA 2: RELATÓRIOS ---
             with tab_relatorios:
                 st.subheader("📊 Resumo da Brassagem")
                 c1, c2, c3 = st.columns(3)
@@ -247,11 +271,11 @@ elif aba == "Área do Mestre":
             # --- ABA 3: RANKING ---
             with tab_ranking:
                 st.subheader("🏆 Top Confrades")
-                top_5 = df_c.nlargest(10, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
-                st.table(top_5)
+                top_10 = df_c.nlargest(10, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
+                st.table(top_10)
                 
         except Exception as e:
-            st.error(f"Erro ao carregar dados: {e}")
+            st.error(f"Erro ao carregar o Grimório: {e}")
             
     elif senha_adm != "":
-        st.error("Chave incorreta.")
+        st.error("Chave incorreta, Confrade.")
