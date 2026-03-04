@@ -56,45 +56,48 @@ def calcular_status_confraria(pontos):
 # --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO ---
 if "logado" not in st.session_state: st.session_state.logado = False
 if "dados_usuario" not in st.session_state: st.session_state.dados_usuario = None
-if "aba_selecionada" not in st.session_state: st.session_state.aba_selecionada = "Meu Painel (Login)"
 
-opcoes_menu = ["Meu Painel (Login)", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
+# Mantenha os nomes IGUAIS aos que usará nos ELIFs abaixo
+opcoes_menu = ["Meu Painel", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
 
 with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Culundria</h2>", unsafe_allow_html=True)
-    aba = st.radio("Navegação:", opcoes_menu, index=opcoes_menu.index(st.session_state.aba_selecionada))
-    st.session_state.aba_selecionada = aba
+    # Criamos o menu
+    aba = st.radio("Navegação:", opcoes_menu)
+    
     if st.session_state.logado:
+        st.write(f"Logado como: {st.session_state.dados_usuario['Nome_Completo'].split()[0]}")
         if st.button("SAIR DA CONFRARIA"):
             st.session_state.logado = False
+            st.session_state.dados_usuario = None
             st.rerun()
 
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
-    # --- ABA: MEU PAINEL (LOGIN) ---
-elif aba == "Meu Painel":
+if aba == "Meu Painel": # <--- Nome batendo exatamente com a lista opcoes_menu
     if not st.session_state.logado:
         st.title("🍺 Acesso à Confraria")
         
-        # Criamos o formulário
-        with st.form("login_confraria"):
-            cpf_login = st.text_input("Digite seu CPF (apenas números)")
-            senha_login = st.text_input("Sua Senha", type="password")
-            botao_entrar = st.form_submit_button("ENTRAR NA CONFRARIA")
+        # 1. Definimos as variáveis ANTES do form para evitar NameError
+        with st.container():
+            cpf_login = st.text_input("Digite seu CPF (apenas números)", key="cpf_input_login")
+            senha_login = st.text_input("Sua Senha", type="password", key="senha_input_login")
             
-            if botao_entrar:
-                # Lógica de login (sua busca na planilha CLIENTES aqui)
-                # ... (verificação de senha) ...
-                pass
-
+            if st.button("ENTRAR NA CONFRARIA"):
+                # --- LÓGICA DE LOGIN ---
+                try:
+                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    dados = sh_c.get_all_records()
+                    df_c = pd.DataFrame(dados)
+                    
         # --- RECUPERAÇÃO DE SENHA (FORA DO FORMULÁRIO) ---
         st.write("---")
         if st.button("Esqueci minha senha"):
             # O truque: verificamos se o usuário digitou algo no campo acima
             if cpf_login and len(cpf_login) >= 11:
                 import urllib.parse
-                seu_numero = "55XXXXXXXXXXX" # <--- SEU WHATSAPP AQUI
+                seu_numero = "5535998732583" # <--- SEU WHATSAPP AQUI
                 msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
                 link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
                 
