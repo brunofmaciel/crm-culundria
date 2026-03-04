@@ -186,44 +186,47 @@ elif aba == "Fazer Parte da Confraria":
         enviar = st.form_submit_button("CRIAR MINHA CONTA")
         
         if enviar:
+            # Limpeza do CPF
             cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
             
             if nome and len(cpf_limpo) == 11 and senha_cad:
                 try:
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     
-                    # Montando a linha exatamente como está na sua planilha 
-                    # Colunas: A(ID), B(Nome), C(Telefone), D(e-mail), E(Nível), F(Pontos T), G(Progresso), H(Data), I(Senha), J(Gastos), K(Saldo)
-                    nova_linha = [
-                        cpf_limpo,              # A: ID_Cliente
-                        nome.strip().upper(),   # B: Nome_Completo
-                        whats.strip(),          # C: Telefone
-                        email.strip().lower(),  # D: e-mail
-                        "Explorador",           # E: Nível_Atual
-                        100,                    # F: Pontos_Totais
-                        0,                      # G: Progresso_Copo (inicial)
-                        pd.Timestamp.now().strftime("%d/%m/%Y"), # H: Data_Cadastro
-                        str(senha_cad).strip(), # I: Senha
-                        0,                      # J: Pontos Gastos (vazio/zero)
-                        100                     # K: Saldo_Atual
-                    ]
+                    # --- TRAVA DE SEGURANÇA: VERIFICA SE CPF JÁ EXISTE ---
+                    cpfs_existentes = sh_c.col_values(1) # Lê toda a Coluna A
                     
-                    # 1. Localiza a primeira linha realmente vazia
-                    col_a = sh_c.col_values(1)
-                    proxima_linha = len(col_a) + 1
-                    
-                    # 2. Insere os dados na linha exata
-                    # O range vai de A até K (11 colunas)
-                    range_insercao = f"A{proxima_linha}:K{proxima_linha}"
-                    sh_c.update(range_insercao, [nova_linha])
-                    
-                    st.success(f"✅ Cadastro realizado na linha {proxima_linha}!")
-                    st.success("✅ Cadastro realizado! Tente fazer login agora.")
-                    st.balloons()
+                    if cpf_limpo in cpfs_existentes:
+                        st.error("🚫 Este CPF já está registado na Confraria! Tente fazer Login.")
+                    else:
+                        # --- SE NÃO EXISTIR, SEGUE O CADASTRO ---
+                        nova_linha = [
+                            cpf_limpo,              # A: ID_Cliente
+                            nome.strip().upper(),   # B: Nome_Completo
+                            whats.strip(),          # C: Telefone
+                            email.strip().lower(),  # D: e-mail
+                            "Explorador",           # E: Nível_Atual
+                            100,                    # F: Pontos_Totais (Boas-vindas)
+                            0,                      # G: Progresso_Copo
+                            pd.Timestamp.now().strftime("%d/%m/%Y"), # H: Data_Cadastro
+                            str(senha_cad).strip(), # I: Senha
+                            0,                      # J: Pontos Gastos
+                            100                     # K: Saldo_Atual
+                        ]
+                        
+                        # Encontra a primeira linha vazia real para evitar buracos na planilha
+                        proxima_vazia = len(cpfs_existentes) + 1
+                        range_celulas = f"A{proxima_vazia}:K{proxima_vazia}"
+                        
+                        sh_c.update(range_celulas, [nova_linha])
+                        
+                        st.success(f"✅ Bem-vindo à Culundria, {nome.split()[0]}! Cadastro realizado.")
+                        st.balloons()
+                        
                 except Exception as e:
-                    st.error(f"Erro técnico: {e}")
+                    st.error(f"Erro ao aceder ao Grimório: {e}")
             else:
-                st.warning("Preencha Nome, CPF (11 dígitos) e Senha.")
+                st.warning("⚠️ Nome, CPF (11 dígitos) e Senha são obrigatórios.")
 # ==========================================
 # ABA 4: AREA DO MESTRE#
 # ==========================================
