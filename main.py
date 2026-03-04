@@ -9,6 +9,10 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAÇÃO DA PÁGINA (APENAS UMA VEZ E NO TOPO!)
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
+# 2. CAPTURA DO VOUCHER (Agora o Streamlit já está configurado)
+query_params = st.query_params
+voucher_detectado = query_params.get("voucher", None)
+
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
