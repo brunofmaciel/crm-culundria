@@ -151,69 +151,79 @@ elif aba == "Fazer Parte da Confraria":
                     st.success("Cadastrado! Faça login.")
                 except Exception as e: st.error(f"Erro: {e}")
 
+# ==========================================
+# ABA 4: AREA DO MESTRE#
+# ==========================================
 elif aba == "Área do Mestre":
-    st.title("🏰 Área do Mestre")
+    st.title("🏰 Gestão Culundria")
     
-    # Campo de senha com chave única
-    senha_adm = st.text_input("Chave do Grimório:", type="password", key="mestre_final_pwd")
+    # Pedimos a senha apenas UMA VEZ
+    senha_adm = st.text_input("Chave do Grimório:", type="password", key="mestre_unica_pwd")
     
     if senha_adm == st.secrets["admin_password"]:
         st.success("Acesso autorizado, Mestre!")
         
+        # Criamos as ABAS para organizar o trabalho
+        tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
+        
+        # --- LÓGICA DE CARREGAMENTO DE DADOS (Carrega uma vez para todas as abas) ---
         try:
-            # --- LEITURA BLINDADA DA ABA VENDAS ---
             sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-            data_v = sh_v.get_all_values()
-            # Criamos o DataFrame e removemos colunas sem nome (vazias)
-            df_v = pd.DataFrame(data_v[1:], columns=data_v[0])
-            df_v = df_v.loc[:, df_v.columns != ''] 
+            df_v = pd.DataFrame(sh_v.get_all_records())
             
-            # --- LEITURA BLINDADA DA ABA CLIENTES ---
             sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-            data_c = sh_c.get_all_values()
-            df_c = pd.DataFrame(data_c[1:], columns=data_c[0])
-            df_c = df_c.loc[:, df_c.columns != '']
-
-            # --- CONVERSÃO DE DADOS (Transforma texto em número) ---
+            df_c = pd.DataFrame(sh_c.get_all_records())
+            
+            # Limpeza rápida
             df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
             df_c['Pontos_Totais'] = pd.to_numeric(df_c['Pontos_Totais'], errors='coerce').fillna(0)
             df_c['Saldo_Atual'] = pd.to_numeric(df_c['Saldo_Atual'], errors='coerce').fillna(0)
 
-            # --- 1. MÉTRICAS DE TOPO ---
-            st.subheader("📊 Resumo da Brassagem")
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
-            c2.metric("Confrades", len(df_c))
-            c3.metric("Pontos p/ Troca", f"{int(df_c['Saldo_Atual'].sum())} PTS")
+            # --- ABA 1: VALIDAÇÃO DE VOUCHER (PARA O ATENDENTE) ---
+            with tab_balcao:
+                st.subheader("🏁 Validação de Resgate")
+                cod_v = st.text_input("Código do Voucher:", placeholder="Ex: V-A1B2").upper().strip()
+                
+                if st.button("VERIFICAR E DAR BAIXA"):
+                    if cod_v:
+                        sh_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
+                        data_r = sh_r.get_all_values()
+                        df_r = pd.DataFrame(data_r[1:], columns=data_r[0])
+                        
+                        v_linha = df_r[df_r['Cód_Voucher'] == cod_v]
+                        
+                        if not v_linha.empty:
+                            idx = v_linha.index[0] + 2
+                            if v_linha.iloc[0]['Status'] == "Pendente":
+                                sh_r.update_cell(idx, 6, "Entregue")
+                                st.success(f"✅ VÁLIDO! Entregar: {v_linha.iloc[0]['Produto']}")
+                                st.balloons()
+                            else:
+                                st.error("❌ Este voucher já foi utilizado!")
+                        else:
+                            st.error("❓ Código não encontrado.")
 
-            st.write("---")
-
-            # --- 2. GRÁFICOS E RANKING ---
-            col_chart, col_rank = st.columns([2, 1])
-            
-            with col_chart:
-                st.subheader("🍺 Estilos mais pedidos")
+            # --- ABA 2: RELATÓRIOS (PARA VOCÊ) ---
+            with tab_relatorios:
+                st.subheader("📊 Resumo da Brassagem")
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
+                c2.metric("Confrades", len(df_c))
+                c3.metric("Pontos p/ Troca", int(df_c['Saldo_Atual'].sum()))
+                
                 if 'Estilo Chopp' in df_v.columns:
-                    vendas_estilo = df_v.groupby('Estilo Chopp')['Litragem_Total'].sum()
-                    st.bar_chart(vendas_estilo)
-                else:
-                    st.warning("Coluna 'Estilo Chopp' não encontrada.")
+                    st.write("---")
+                    st.subheader("🍺 Estilos mais pedidos")
+                    st.bar_chart(df_v.groupby('Estilo Chopp')['Litragem_Total'].sum())
 
-            with col_rank:
+            # --- ABA 3: RANKING ---
+            with tab_ranking:
                 st.subheader("🏆 Top Confrades")
-                top_5 = df_c.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
+                top_5 = df_c.nlargest(10, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
                 st.table(top_5)
-
-            # --- 3. GESTÃO DE RESGATES (Aba INDICAÇÕES) ---
-            st.write("---")
-            st.subheader("🚀 Pedidos e Indicações")
-            sh_i = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
-            data_i = sh_i.get_all_values()
-            df_i = pd.DataFrame(data_i[1:], columns=data_i[0])
-            st.dataframe(df_i)
-
+                
         except Exception as e:
-            st.error(f"Erro ao processar o grimório: {e}")
+            st.error(f"Erro ao carregar dados: {e}")
             
     elif senha_adm != "":
         st.error("Chave incorreta.")
