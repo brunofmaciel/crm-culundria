@@ -134,36 +134,58 @@ elif aba == "Loja de Souvenirs":
             st.stop()
 
         # 2. DEFINIÇÃO DOS PRODUTOS COM IMAGENS E DESCRIÇÃO
-        produtos = [
-            {"nome": "1 Pint (500ml)", "pontos": 150, "img": "🍺", "url": "https://imgur.com/link_da_foto_pint.jpg"},
-            {"nome": "Growler Pet 1L", "pontos": 250, "img": "🧴", "url": "https://imgur.com/link_da_foto_growler.jpg"},
-            {"nome": "Boné Culundria", "pontos": 800, "img": "🧢", "url": "https://imgur.com/link_da_foto_bone.jpg"},
-            {"nome": "Camiseta Confraria", "pontos": 1200, "img": "👕", "url": "https://imgur.com/link_da_foto_camiseta.jpg"}
-        ]
-        
-        # 3. EXIBIÇÃO EM GRID (CARDS VISUAIS)
+        elif aba == "Loja de Souvenirs":
+    st.title("🛍️ Loja de Souvenirs")
+    
+    if not st.session_state.logado:
+        st.warning("Faça login no 'Meu Painel' para acessar a loja!")
+    else:
+        # 1. BUSCA PRODUTOS DA PLANILHA EM TEMPO REAL
+        try:
+            sh = client.open(NOME_PLANILHA)
+            # Carrega a aba PRODUTOS
+            aba_p = sh.worksheet("PRODUTOS")
+            df_p = pd.DataFrame(aba_p.get_all_records())
+            
+            # Filtra apenas os que estão marcados como ATIVO = SIM
+            produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
+        except Exception as e:
+            st.error(f"Erro ao carregar catálogo: {e}")
+            st.stop()
+
+        # 2. SINCRONIZAÇÃO DE SALDO (Mesma lógica de segurança anterior)
+        try:
+            aba_c = sh.worksheet("CLIENTES")
+            c = st.session_state.dados_usuario
+            celula_usuario = aba_c.find(str(c['ID_Cliente']))
+            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value) # Coluna K
+            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
+        except:
+            st.error("Erro ao sincronizar saldo.")
+            st.stop()
+
+        # 3. EXIBIÇÃO EM GRID (Agora vindo do Banco de Dados)
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
-                # Card Visual do Produto
                 st.markdown(f"""
                     <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
-                        <h3 style='margin:0; color: #e68a00;'>{p['img']} {p['nome']}</h3>
+                        <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # Espaço para a imagem (Substitua as URLs acima pelos links reais)
-                try:
-                    st.image(p['url'], use_container_width=True)
-                except:
-                    st.info("Imagem do produto em breve!")
+                # Exibe imagem da planilha ou aviso se estiver vazio
+                if p['URL_Imagem']:
+                    st.image(p['URL_Imagem'], use_container_width=True)
+                else:
+                    st.info("Foto em breve!")
 
                 st.markdown(f"""
                     <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
-                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['pontos']} GOLES</p>
+                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
                     </div>
                 """, unsafe_allow_html=True)
-                
+                                
                 # 4. LÓGICA DE RESGATE COM DÉBITO REAL
                 if saldo_real >= p['pontos']:
                     if st.button(f"RESGATAR {p['nome'].upper()}", key=f"btn_resgate_{i}"):
