@@ -188,7 +188,7 @@ elif aba == "Loja de Souvenirs":
                                 # QR Code
                                 url_app = "https://golesdevantagem.culundria.streamlit.app" 
                                 link_res = f"{url_base}/?voucher={voucher}"
-                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={urllib.parse.quote(link_resgate)}"
+                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={urllib.parse.quote(link_res)}"
                                 
                                 st.success(f"Confirmado! -{p['Pontos']} Goles.")
                                 st.markdown(f"""
