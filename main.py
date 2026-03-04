@@ -4,18 +4,14 @@ import random
 import string
 import pandas as pd
 import urllib.parse
-from google.oauth2.service_account import Credentials # <-- Corrigido aqui!
+from google.oauth2.service_account import Credentials
 
-# 1. CONFIGURAÇÃO DA PÁGINA (Deve ser o PRIMEIRO comando Streamlit)
+# 1. CONFIGURAÇÃO DA PÁGINA (APENAS UMA VEZ E NO TOPO!)
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-
-
-# 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
 st.markdown("""
@@ -57,17 +53,27 @@ def calcular_status_confraria(pontos):
     else:
         return {"nivel": "Patrimônio", "desc": "Você é uma lenda sagrada.", "cor": "#ffcc33", "proximo_pts": p, "msg": "Obrigado, lenda! 🍻"}
 
-# --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO ---
+# --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO DINÂMICA ---
 if "logado" not in st.session_state: st.session_state.logado = False
 if "dados_usuario" not in st.session_state: st.session_state.dados_usuario = None
 
-# Mantenha os nomes IGUAIS aos que usará nos ELIFs abaixo
+# Captura o voucher da URL se existir
+query_params = st.query_params
+voucher_detectado = query_params.get("voucher", None)
+
 opcoes_menu = ["Meu Painel", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
+
+# Define qual aba abrir primeiro (se houver voucher, pula para Área do Mestre)
+if voucher_detectado:
+    indice_inicial = 3
+else:
+    indice_inicial = 0
 
 with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Culundria</h2>", unsafe_allow_html=True)
-    # Criamos o menu
-    aba = st.radio("Navegação:", opcoes_menu)
+    
+    # O index=indice_inicial faz a mágica do redirecionamento
+    aba = st.radio("Navegação:", opcoes_menu, index=indice_inicial)
     
     if st.session_state.logado:
         st.write(f"Logado como: {st.session_state.dados_usuario['Nome_Completo'].split()[0]}")
@@ -75,6 +81,8 @@ with st.sidebar:
             st.session_state.logado = False
             st.session_state.dados_usuario = None
             st.rerun()
+
+# --- CONTINUAÇÃO DOS ELIFs ABAIXO ---
 
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
