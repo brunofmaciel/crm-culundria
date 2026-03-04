@@ -73,36 +73,27 @@ with st.sidebar:
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================# --- ABA: MEU PAINEL (LOGIN) ---
 elif aba == "Meu Painel":
-    if not st.session_state.logado:
-        st.title("🍺 Acesso à Confraria")
+    if not st.session_state.get('logado', False):
+        st.title("🔑 Login")
         
-        # Criamos o formulário
-        with st.form("login_confraria"):
-            cpf_login = st.text_input("Digite seu CPF (apenas números)")
-            senha_login = st.text_input("Sua Senha", type="password")
-            botao_entrar = st.form_submit_button("ENTRAR NA CONFRARIA")
+        # 1. Definimos os campos fora do form para o Python "enxergar"
+        cpf_input = st.text_input("CPF (apenas números)", key="cpf_login_field")
+        senha_input = st.text_input("Senha", type="password", key="senha_login_field")
+        
+        if st.button("ENTRAR NA CONFRARIA"):
+            # Lógica de validação...
+            pass
             
-            if botao_entrar:
-                # Lógica de login (sua busca na planilha CLIENTES aqui)
-                # ... (verificação de senha) ...
-                pass
-
-        # --- RECUPERAÇÃO DE SENHA (FORA DO FORMULÁRIO) ---
         st.write("---")
+        
+        # 2. Agora o botão de senha funciona sem NameError
         if st.button("Esqueci minha senha"):
-            # O truque: verificamos se o usuário digitou algo no campo acima
-            if cpf_login and len(cpf_login) >= 11:
+            if len(cpf_input) == 11:
                 import urllib.parse
-                seu_numero = "55XXXXXXXXXXX" # <--- SEU WHATSAPP AQUI
-                msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
-                link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
-                
-                st.info("Clique no botão abaixo para falar com o Mestre:")
-                st.link_button("📩 SOLICITAR SENHA VIA WHATSAPP", link_zap)
+                msg = urllib.parse.quote(f"Olá Mestre! Esqueci minha senha. CPF: {cpf_input}")
+                st.link_button("📩 SOLICITAR VIA WHATSAPP", f"https://wa.me/55XXXXXXXXXXX?text={msg}")
             else:
-                st.warning("⚠️ Digite seu CPF no campo de login acima primeiro para que eu possa te identificar.")
-
-
+                st.warning("Digite seu CPF de 11 dígitos no campo acima.")
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS
 # ==========================================
