@@ -82,49 +82,49 @@ with st.sidebar:
             st.session_state.dados_usuario = None
             st.rerun()
 
-# --- CONTINUAÇÃO DOS ELIFs ABAIXO ---
-
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
 if aba == "Meu Painel":
     if not st.session_state.logado:
+        # --- AQUI VAI TODO O SEU CÓDIGO DE LOGIN QUE VOCÊ POSTOU ---
         st.title("🍺 Acesso à Confraria")
+        # ... (seu código de login e formulário) ...
         
-        with st.container():
-            cpf_login = st.text_input("Digite seu CPF (apenas números)", key="cpf_input_login")
-            senha_login = st.text_input("Sua Senha", type="password", key="senha_input_login")
+    else:
+        # --- AQUI É O QUE APARECE QUANDO O CLIENTE JÁ ESTÁ LOGADO ---
+        u = st.session_state.dados_usuario
+        status = calcular_status_confraria(u['Saldo_Atual'])
+        
+        st.title(f"🍻 Bem-vindo, {u['Nome_Completo'].split()[0]}!")
+        
+        # 1. LINHA DE MÉTRICAS (PONTOS E NÍVEL)
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Saldo de Goles", f"{int(u['Saldo_Atual'])} 🍺")
+        with c2:
+            st.metric("Seu Nível", status['nivel'])
             
-            if st.button("ENTRAR NA CONFRARIA"):
-                try:
-                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    dados = sh_c.get_all_records()
-                    df_c = pd.DataFrame(dados)
-                    
-                    # Busca usuário
-                    user = df_c[(df_c['ID_Cliente'].astype(str) == cpf_login) & (df_c['Senha'].astype(str) == senha_login)]
-                    
-                    if not user.empty:
-                        st.session_state.logado = True
-                        st.session_state.dados_usuario = user.iloc[0].to_dict()
-                        st.success("Login realizado! Carregando seu barril...")
-                        st.rerun()
-                    else:
-                        st.error("CPF ou Senha incorretos.")
-                except Exception as e:
-                    st.error(f"Erro ao acessar banco de dados: {e}")
-
+        # 2. BARRA DE PROGRESSO PARA O PRÓXIMO NÍVEL
+        st.write(f"**Status:** {status['desc']}")
+        progresso = min(float(u['Saldo_Atual']) / status['proximo_pts'], 1.0)
+        st.progress(progresso)
+        st.caption(status['msg'])
+        
+        # 3. ÁREA DE QR CODE DO CLIENTE (PARA O MESTRE DAR PONTOS)
         st.write("---")
-        if st.button("Esqueci minha senha"):
-            if cpf_login and len(cpf_login) >= 11:
-                seu_numero = "55XXXXXXXXXXX" # <--- COLOQUE SEU WHATSAPP AQUI
-                msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
-                link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
-                st.info("Solicite sua senha ao Mestre:")
-                st.link_button("📩 SOLICITAR VIA WHATSAPP", link_zap)
-            else:
-                st.warning("⚠️ Digite seu CPF no campo acima para recuperar a senha.")
-
+        st.subheader("🆔 Meu QR Code de Confrade")
+        st.write("Apresente este código ao Mestre para ganhar novos pontos!")
+        
+        # Gera QR Code com o CPF do cliente
+        qr_identificacao = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={u['ID_Cliente']}"
+        st.image(qr_identificacao, width=200)
+        
+        # BOTÃO DE SAIR
+        if st.button("LOGOUT / SAIR"):
+            st.session_state.logado = False
+            st.session_state.dados_usuario = None
+            st.rerun()
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
 # ==========================================
