@@ -113,119 +113,106 @@ if aba == "Meu Painel": # <--- Nome batendo exatamente com a lista opcoes_menu
 # ==========================================
 elif aba == "Loja de Souvenirs":
     st.title("🛍️ Loja de Souvenirs")
+    
     if not st.session_state.logado:
-        st.warning("Faça login para acessar a loja!")
+        st.warning("Faça login no 'Meu Painel' para acessar a loja!")
     else:
-        import urllib.parse  # Garante que o link do QR Code seja gerado corretamente
-        
+        import urllib.parse
         c = st.session_state.dados_usuario
-        saldo = float(c.get('Saldo_Atual', c.get('Pontos_Totais', 0)))
-        st.subheader(f"Seu Saldo: {int(saldo)} Goles")
+        cpf_logado = str(c['ID_Cliente'])
         
+        # 1. SINCRONIZAÇÃO DE SALDO REAL (SEGURANÇA)
+        try:
+            sh = client.open(NOME_PLANILHA)
+            aba_c = sh.worksheet("CLIENTES")
+            celula_usuario = aba_c.find(cpf_logado)
+            # Buscando Saldo Atual na Coluna K (11)
+            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value)
+            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
+        except Exception as e:
+            st.error(f"Erro ao sincronizar saldo: {e}")
+            st.stop()
+
+        # 2. DEFINIÇÃO DOS PRODUTOS COM IMAGENS E DESCRIÇÃO
         produtos = [
-            {"nome": "1 Pint (500ml)", "pontos": 150, "img": "🍺"},
-            {"nome": "Growler Pet 1L", "pontos": 250, "img": "🧴"},
-            {"nome": "Boné Culundria", "pontos": 800, "img": "🧢"},
-            {"nome": "Camiseta Confraria", "pontos": 1200, "img": "👕"}
+            {"nome": "1 Pint (500ml)", "pontos": 150, "img": "🍺", "url": "https://imgur.com/link_da_foto_pint.jpg"},
+            {"nome": "Growler Pet 1L", "pontos": 250, "img": "🧴", "url": "https://imgur.com/link_da_foto_growler.jpg"},
+            {"nome": "Boné Culundria", "pontos": 800, "img": "🧢", "url": "https://imgur.com/link_da_foto_bone.jpg"},
+            {"nome": "Camiseta Confraria", "pontos": 1200, "img": "👕", "url": "https://imgur.com/link_da_foto_camiseta.jpg"}
         ]
         
+        # 3. EXIBIÇÃO EM GRID (CARDS VISUAIS)
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
-                st.markdown(f"<div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border: 1px solid #e68a00;'><h3>{p['img']} {p['nome']}</h3><p>{p['pontos']} Goles</p></div>", unsafe_allow_html=True)
+                # Card Visual do Produto
+                st.markdown(f"""
+                    <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
+                        <h3 style='margin:0; color: #e68a00;'>{p['img']} {p['nome']}</h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 
-                if saldo >= p['pontos']:
-                    if st.button(f"Resgatar {p['nome']}", key=f"btn_loja_{i}"):
-                        voucher = gerar_codigo()
-                        try:
-                            # 1. Tenta salvar na aba RESGATES
-                            aba_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
-                            aba_r.append_row([
-                                voucher, 
-                                c['ID_Cliente'], 
-                                p['nome'], 
-                                p['pontos'], 
-                                pd.Timestamp.now().strftime("%d/%m/%Y"), 
-                                "Pendente"
-                            ])
-                            
-                            # 2. Gera o Link e o QR Code
-                            # ATENÇÃO: Substitua o link abaixo pelo link real do seu app no Streamlit
-                            url_app = "https://crm-culundria.streamlit.app/" 
-                            link_resgate = f"{url_app}?voucher={voucher}"
-                            qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_resgate)}"
-                            
-                            # 3. Mostra o comprovante visual com QR Code
-                            st.success("Resgate realizado com sucesso!")
-                            
-                            st.markdown(f"""
-                                <div style='text-align: center; background-color: #ffffff; padding: 20px; border-radius: 15px; border: 5px solid #e68a00;'>
-                                    <p style='color: #0b0e27; font-weight: bold; margin-bottom: 10px;'>APRESENTE NO BALCÃO</p>
-                                    <img src='{qr_url}' style='width: 180px; margin-bottom: 10px;'>
-                                    <h1 style='color: #0b0e27; margin: 0; font-size: 2.5em;'>{voucher}</h1>
-                                    <p style='color: #444; margin: 0;'>{p['nome']}</p>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            
-                            st.balloons()
-                        except Exception as e:
-                            st.error(f"Erro ao registrar resgate: {e}")
-                else:
-                    st.button("Saldo Insuficiente", key=f"btn_loja_{i}", disabled=True)
-elif aba == "Fazer Parte da Confraria":
-    st.title("🧪 Entre para a Confraria")
-    
-    with st.form("form_cadastro_culundria", clear_on_submit=True):
-        nome = st.text_input("Nome Completo")
-        cpf_cad = st.text_input("CPF (apenas números)")
-        whats = st.text_input("WhatsApp/Telefone (com DDD)")
-        email = st.text_input("E-mail")
-        senha_cad = st.text_input("Crie uma Senha", type="password")
-        
-        enviar = st.form_submit_button("CRIAR MINHA CONTA")
-        
-        if enviar:
-            # Limpeza do CPF
-            cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
-            
-            if nome and len(cpf_limpo) == 11 and senha_cad:
+                # Espaço para a imagem (Substitua as URLs acima pelos links reais)
                 try:
-                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    st.image(p['url'], use_container_width=True)
+                except:
+                    st.info("Imagem do produto em breve!")
+
+                st.markdown(f"""
+                    <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
+                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['pontos']} GOLES</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # 4. LÓGICA DE RESGATE COM DÉBITO REAL
+                if saldo_real >= p['pontos']:
+                    if st.button(f"RESGATAR {p['nome'].upper()}", key=f"btn_resgate_{i}"):
+                        with st.spinner("Processando resgate..."):
+                            try:
+                                # A. Gera Voucher e calcula novo saldo
+                                voucher = gerar_codigo()
+                                novo_saldo = saldo_real - p['pontos']
+                                
+                                # B. GRAVAÇÃO NA PLANILHA (DÉBITO IMEDIATO)
+                                # Atualiza saldo na Coluna K (11)
+                                aba_c.update_cell(celula_usuario.row, 11, novo_saldo)
+                                
+                                # Registra na aba RESGATES
+                                aba_r = sh.worksheet("RESGATES")
+                                aba_r.append_row([
+                                    voucher, 
+                                    cpf_logado, 
+                                    p['nome'], 
+                                    p['pontos'], 
+                                    pd.Timestamp.now().strftime("%d/%m/%Y"), 
+                                    "Pendente"
+                                ])
+                                
+                                # C. GERAÇÃO DO QR CODE
+                                # Troque pelo link do seu app real
+                                url_app = "https://crm-culundria.streamlit.app/" 
+                                link_resgate = f"{url_app}?voucher={voucher}"
+                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_resgate)}"
+                                
+                                st.success(f"Resgate confirmado! -{p['pontos']} Goles.")
+                                st.markdown(f"""
+                                    <div style='text-align: center; background-color: #ffffff; padding: 20px; border-radius: 15px; border: 5px solid #e68a00;'>
+                                        <p style='color: #0b0e27; font-weight: bold; margin-bottom: 10px;'>APRESENTE NO BALCÃO:</p>
+                                        <img src='{qr_url}' style='width: 180px; margin-bottom: 10px;'>
+                                        <h1 style='color: #0b0e27; margin: 0; font-size: 2.5em;'>{voucher}</h1>
+                                        <p style='color: #444; margin: 0;'>{p['nome']}</p>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                st.balloons()
+                                
+                                # Força a atualização do saldo exibido na próxima interação
+                                st.session_state.dados_usuario['Saldo_Atual'] = novo_saldo
+                                
+                            except Exception as e:
+                                st.error(f"Erro na transação: {e}")
+                else:
+                    st.button("Saldo Insuficiente", key=f"btn_disabled_{i}", disabled=True)
                     
-                    # --- TRAVA DE SEGURANÇA: VERIFICA SE CPF JÁ EXISTE ---
-                    cpfs_existentes = sh_c.col_values(1) # Lê toda a Coluna A
-                    
-                    if cpf_limpo in cpfs_existentes:
-                        st.error("🚫 Este CPF já está registado na Confraria! Tente fazer Login.")
-                    else:
-                        # --- SE NÃO EXISTIR, SEGUE O CADASTRO ---
-                        nova_linha = [
-                            cpf_limpo,              # A: ID_Cliente
-                            nome.strip().upper(),   # B: Nome_Completo
-                            whats.strip(),          # C: Telefone
-                            email.strip().lower(),  # D: e-mail
-                            "Explorador",           # E: Nível_Atual
-                            100,                    # F: Pontos_Totais (Boas-vindas)
-                            0,                      # G: Progresso_Copo
-                            pd.Timestamp.now().strftime("%d/%m/%Y"), # H: Data_Cadastro
-                            str(senha_cad).strip(), # I: Senha
-                            0,                      # J: Pontos Gastos
-                            100                     # K: Saldo_Atual
-                        ]
-                        
-                        # Encontra a primeira linha vazia real para evitar buracos na planilha
-                        proxima_vazia = len(cpfs_existentes) + 1
-                        range_celulas = f"A{proxima_vazia}:K{proxima_vazia}"
-                        
-                        sh_c.update(range_celulas, [nova_linha])
-                        
-                        st.success(f"✅ Bem-vindo à Culundria, {nome.split()[0]}! Cadastro realizado.")
-                        st.balloons()
-                        
-                except Exception as e:
-                    st.error(f"Erro ao aceder ao Grimório: {e}")
-            else:
-                st.warning("⚠️ Nome, CPF (11 dígitos) e Senha são obrigatórios.")
 # ==========================================
 # ABA 4: AREA DO MESTRE#
 # ==========================================
