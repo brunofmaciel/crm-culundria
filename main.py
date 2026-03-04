@@ -6,6 +6,14 @@ import pandas as pd
 import urllib.parse
 from google.oauth2.service_account import Credentials
 
+# --- LOGICA DE CAPTURA DE VOUCHER (COLOQUE NO TOPO) ---
+query_params = st.query_params
+voucher_detectado = query_params.get("voucher")
+
+# Se detectou um voucher no link, força a aba "Área do Mestre"
+if voucher_detectado:
+    st.session_state.aba_selecionada = "Área do Mestre"
+    # Opcional: st.toast(f"Voucher {voucher_detectado} detectado!")
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
@@ -187,8 +195,8 @@ elif aba == "Loja de Souvenirs":
                                 
                                 # QR Code
                                 url_base = "https://golesdevantagem.culundria.streamlit.app" 
-                                link_resgate = f"{url_base}/?voucher={voucher}"
-                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={urllib.parse.quote(link_resgate)}"
+                                link_resgate = f"{url_base}?voucher={voucher}"
+                               qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(link_resgate)}"
                                 
                                 st.success(f"Confirmado! -{p['Pontos']} Goles.")
                                 st.markdown(f"""
