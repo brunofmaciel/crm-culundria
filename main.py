@@ -174,21 +174,50 @@ elif aba == "Loja de Souvenirs":
                 else:
                     st.button("Saldo Insuficiente", key=f"btn_loja_{i}", disabled=True)
 # ==========================================
-# ABA 3: CADASTRO
+# ABA: CADASTRO (COMPLETO)
 # ==========================================
 elif aba == "Fazer Parte da Confraria":
-    st.title("🧪 Cadastro")
-    with st.form("cad"):
-        nome = st.text_input("Nome")
-        cpf_c = st.text_input("CPF")
-        sen_c = st.text_input("Senha", type="password")
-        if st.form_submit_button("CADASTRAR"):
-            if nome and cpf_c:
+    st.title("🧪 Entre para a Confraria")
+    st.write("Preencha seus dados para começar a acumular goles e conquistar prêmios.")
+    
+    with st.form("form_cadastro_culundria", clear_on_submit=True):
+        nome = st.text_input("Nome Completo")
+        cpf_cad = st.text_input("CPF (apenas números, 11 dígitos)")
+        whats = st.text_input("WhatsApp (com DDD)")
+        email = st.text_input("E-mail")
+        senha_cad = st.text_input("Crie uma Senha", type="password")
+        
+        # Botão de submissão
+        enviar = st.form_submit_button("CRIAR MINHA CONTA")
+        
+        if enviar:
+            # Limpeza básica do CPF
+            cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip().zfill(11)
+            
+            if nome and len(cpf_limpo) == 11 and senha_cad:
                 try:
-                    sh = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    sh.append_row([str(cpf_c).strip().zfill(11), nome.upper(), "", "", "Explorador", 0, 0, pd.Timestamp.now().strftime("%d/%m/%Y"), sen_c])
-                    st.success("Cadastrado! Faça login.")
-                except Exception as e: st.error(f"Erro: {e}")
+                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    
+                    # Ordem das colunas: CPF, Nome, Whats, Email, Nível, Pontos Totais, Saldo Atual, Data, Senha
+                    nova_linha = [
+                        cpf_limpo, 
+                        nome.strip().upper(), 
+                        whats.strip(), 
+                        email.strip().lower(), 
+                        "Explorador", 
+                        100, # Pontos iniciais de boas-vindas
+                        100, # Saldo inicial disponível
+                        pd.Timestamp.now().strftime("%d/%m/%Y"), 
+                        str(senha_cad).strip()
+                    ]
+                    
+                    sh_c.append_row(nova_linha)
+                    st.success("✅ Cadastro realizado com sucesso! Vá até 'Meu Painel' para entrar.")
+                    st.balloons()
+                except Exception as e:
+                    st.error(f"Erro ao salvar no banco de dados: {e}")
+            else:
+                st.warning("⚠️ Por favor, preencha Nome, CPF válido e Senha.")
 
 # ==========================================
 # ABA 4: AREA DO MESTRE#
