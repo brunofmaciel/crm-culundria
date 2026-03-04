@@ -208,7 +208,16 @@ elif aba == "Fazer Parte da Confraria":
                         100                     # K: Saldo_Atual
                     ]
                     
-                    sh_c.append_row(nova_linha)
+                    # 1. Localiza a primeira linha realmente vazia
+                    col_a = sh_c.col_values(1)
+                    proxima_linha = len(col_a) + 1
+                    
+                    # 2. Insere os dados na linha exata
+                    # O range vai de A até K (11 colunas)
+                    range_insercao = f"A{proxima_linha}:K{proxima_linha}"
+                    sh_c.update(range_insercao, [nova_linha])
+                    
+                    st.success(f"✅ Cadastro realizado na linha {proxima_linha}!")
                     st.success("✅ Cadastro realizado! Tente fazer login agora.")
                     st.balloons()
                 except Exception as e:
