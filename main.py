@@ -1,24 +1,18 @@
 import streamlit as st
 import gspread
-import random  # <--- ADICIONE ESTE
-import string  # <--- ADICIONE ESTE
+import random
+import string
 import pandas as pd
 import urllib.parse
-import Credentials
+from google.oauth2.service_account import Credentials # <-- Corrigido aqui!
 
-from google.oauth2.service_account 
+# 1. CONFIGURAÇÃO DA PÁGINA (Deve ser o PRIMEIRO comando Streamlit)
+st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
-query_params = st.query_params
-voucher_detectado = query_params.get("voucher")
-
-# Se detectou um voucher no link, força a aba "Área do Mestre"
-if voucher_detectado:
-    st.session_state.aba_selecionada = "Área do Mestre"
-    # Opcional: st.toast(f"Voucher {voucher_detectado} detectado!")
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
@@ -66,6 +60,9 @@ def calcular_status_confraria(pontos):
 # --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO ---
 if "logado" not in st.session_state: st.session_state.logado = False
 if "dados_usuario" not in st.session_state: st.session_state.dados_usuario = None
+
+query_params = st.query_params
+voucher_detectado = query_params.get("voucher", None)
 
 # Mantenha os nomes IGUAIS aos que usará nos ELIFs abaixo
 opcoes_menu = ["Meu Painel", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
