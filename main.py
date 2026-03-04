@@ -186,7 +186,7 @@ elif aba == "Loja de Souvenirs":
                                 ])
                                 
                                 # QR Code
-                                url_app = "https://crm-culundria.streamlit.app/" 
+                                url_app = "https://golesdevantagem.culundria.streamlit.app" 
                                 link_res = f"{url_app}?voucher={voucher}"
                                 qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_res)}"
                                 
