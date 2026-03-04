@@ -74,7 +74,7 @@ with st.sidebar:
 # ==========================================
 
     elif aba == "Meu Painel":
-    if not st.session_state.get('logado', False):
+        if not st.session_state.get('logado', False):
         st.title("🔑 Login")
         
         # 1. Definimos os campos fora do form para o Python "enxergar"
