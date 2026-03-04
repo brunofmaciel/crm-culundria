@@ -96,81 +96,57 @@ if aba == "Meu Painel":
         # ... (seu código de login e formulário) ...
         
     else:
+        st.info("🔍 Iniciando carregamento do painel...")
         u = st.session_state.get('dados_usuario')
-        cpf_logado = str(u['ID_Cliente']).strip()
         
-        st.title(f"🍻 Painel do Confrade")
-        st.subheader(f"Olá, {u.get('Nome_Completo', 'Confrade').split()[0]}!")
+        if not u:
+            st.error("ERRO: Dados do usuário não encontrados na sessão.")
+            st.stop()
 
-        # 1. MÉTRICAS BÁSICAS
-        saldo_p = u.get('Saldo_Atual', 0)
-        status_info = calcular_status_confraria(saldo_p)
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.metric("Saldo de Goles", f"{int(saldo_p)} 🍺")
-        with c2:
-            st.metric("Nível", status_info['nivel'])
-        with c3:
-            # Placeholder para inatividade
-            meta_inatividade = st.empty()
-            meta_inatividade.metric("Inatividade", "-- dias")
-
-        # 2. BARRA DE PROGRESSO
-        progresso = min(float(saldo_p) / (status_info['proximo_pts'] if status_info['proximo_pts'] > 0 else 1), 1.0)
-        st.progress(progresso)
-        st.caption(f"**Status:** {status_info['desc']} | {status_info['msg']}")
-
-        # 3. BUSCA NO HISTÓRICO (ABA VENDAS)
-        st.write("---")
-        st.subheader("🛢️ Meus Barris Consumidos")
-        
+        # 1. TESTE DE RENDERIZAÇÃO BÁSICA
         try:
-            sh = client.open(NOME_PLANILHA)
-            df_vendas = pd.DataFrame(sh.worksheet("VENDAS").get_all_records())
-            
-            if not df_vendas.empty:
-                # Limpeza de dados para evitar erro de busca
-                df_vendas['ID_Cliente'] = df_vendas['ID_Cliente'].astype(str).str.strip()
-                minhas_vendas = df_vendas[df_vendas['ID_Cliente'] == cpf_logado].copy()
-                
-                if not minhas_vendas.empty:
-                    # Converte data ignorando erros de preenchimento na planilha
-                    minhas_vendas['Data_Venda'] = pd.to_datetime(minhas_vendas['Data_Venda'], dayfirst=True, errors='coerce')
-                    minhas_vendas = minhas_vendas.dropna(subset=['Data_Venda'])
-                    
-                    if not minhas_vendas.empty:
-                        # Cálculo de Inatividade
-                        u_data = minhas_vendas['Data_Venda'].max()
-                        dias_inat = (pd.Timestamp.now() - u_data).days
-                        meta_inatividade.metric("Inatividade", f"{dias_inat} dias")
-                        
-                        # Alerta de Expiração
-                        d_expira = 365 - dias_inat
-                        if d_expira <= 30:
-                            st.warning(f"⚠️ Seus pontos expiram em {d_expira} dias! Peça um barril para renovar.")
-                        
-                        # EXTRATO VISUAL (Usando seus cabeçalhos exatos)
-                        # Nota: Usei os nomes que você enviou. Verifique se 'Bonus_Pedido' tem underline ou espaço.
-                        colunas_ver = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']
-                        extrato = minhas_vendas[colunas_ver].copy()
-                        extrato['Data_Venda'] = extrato['Data_Venda'].dt.strftime('%d/%m/%Y')
-                        extrato.columns = ['Data', 'Estilo', 'Litros', 'Goles']
-                        
-                        st.table(extrato.sort_index(ascending=False))
-                    else:
-                        st.info("Aguardando validação de data das suas compras...")
-                else:
-                    st.info("Nenhum barril registrado. Que tal pedir um hoje?")
-            else:
-                st.write("Histórico de vendas vazio.")
+            st.title(f"🍻 Painel de {u.get('Nome_Completo', 'Confrade')}")
+            saldo_p = u.get('Saldo_Atual', 0)
+            st.metric("Seu Saldo", f"{saldo_p} Goles")
+            st.success("✅ Parte 1 (Métricas) carregada.")
         except Exception as e:
-            st.caption(f"Histórico em atualização... (Dica: verifique os nomes das colunas na planilha)")
+            st.error(f"❌ Falha na Parte 1: {e}")
 
-        # 4. BOTÃO DE LOGOUT
-        if st.button("🚪 ENCERRAR SESSÃO", key="btn_logout_final"):
+        # 2. TESTE DE CONEXÃO COM A PLANILHA
+        st.write("---")
+        try:
+            st.write("📡 Tentando conectar à aba VENDAS...")
+            sh = client.open(NOME_PLANILHA)
+            aba_v = sh.worksheet("VENDAS")
+            dados_v = aba_v.get_all_records()
+            df_vendas = pd.DataFrame(dados_v)
+            st.success(f"✅ Parte 2 (Planilha) conectada. Linhas encontradas: {len(df_vendas)}")
+        except Exception as e:
+            st.error(f"❌ Falha na Parte 2: {e}")
+            st.stop()
+
+        # 3. TESTE DE FILTRO DE DADOS
+        try:
+            cpf_busca = str(u['ID_Cliente']).strip()
+            df_vendas['ID_Cliente'] = df_vendas['ID_Cliente'].astype(str).str.strip()
+            minhas_vendas = df_vendas[df_vendas['ID_Cliente'] == cpf_busca].copy()
+            
+            st.write(f"Filtrando CPF: {cpf_busca}...")
+            st.write(f"Compras encontradas para este CPF: {len(minhas_vendas)}")
+            
+            if not minhas_vendas.empty:
+                # Teste das colunas específicas que você passou
+                colunas_planilha = ['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']
+                st.dataframe(minhas_vendas[colunas_planilha])
+                st.success("✅ Parte 3 (Histórico) renderizada.")
+            else:
+                st.warning("Nenhuma compra vinculada a este CPF na aba VENDAS.")
+        except Exception as e:
+            st.error(f"❌ Falha na Parte 3 (Colunas/Filtro): {e}")
+
+        # 4. BOTÃO DE SAIR
+        if st.button("SAIR"):
             st.session_state.logado = False
-            st.session_state.dados_usuario = None
             st.rerun()
             
 # ==========================================
