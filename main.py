@@ -151,7 +151,7 @@ if aba == "Meu Painel":
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
             
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3 = st.columns([1, 2, 1])
             with c1:
                 st.metric("Saldo de Goles", f"{int(saldo)} 🍺")
             with c2:
