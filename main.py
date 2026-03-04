@@ -89,7 +89,7 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
-if aba == "Meu Painel":
+    if aba == "Meu Painel":
     if not st.session_state.logado:
         # --- AQUI VAI TODO O SEU CÓDIGO DE LOGIN QUE VOCÊ POSTOU ---
         st.title("🍺 Acesso à Confraria")
