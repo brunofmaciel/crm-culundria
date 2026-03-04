@@ -167,8 +167,8 @@ if aba == "Meu Painel":
             with c2:
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #00d4ff;">
-                        <p style="margin:0; font-size: 1.0rem; color: #aaa; font-weight: bold;">STATUS</p>
-                        <h2 style="margin:0; font-size: 1.1rem; color: #ffffff;">{status['nivel']}</h2>
+                        <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">STATUS</p>
+                        <h2 style="margin:0; font-size: 2rem; color: #ffffff;">{status['nivel']}</h2>
                     </div>
                 """, unsafe_allow_html=True)
             
