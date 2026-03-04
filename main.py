@@ -71,8 +71,9 @@ with st.sidebar:
 
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
-# ==========================================# --- ABA: MEU PAINEL (LOGIN) ---
-elif aba == "Meu Painel":
+# ==========================================
+
+    elif aba == "Meu Painel":
     if not st.session_state.get('logado', False):
         st.title("🔑 Login")
         
