@@ -95,7 +95,7 @@ if aba == "Meu Painel":
         st.title("🍺 Acesso à Confraria")
         # ... (seu código de login e formulário) ...
         
-   else:
+    else:
         # Pega os dados da sessão
         u = st.session_state.dados_usuario
         cpf_logado = str(u['ID_Cliente']).strip()
