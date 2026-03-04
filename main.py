@@ -160,7 +160,7 @@ if aba == "Meu Painel":
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #e68a00;">
                         <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">SALDO</p>
-                        <h2 style="margin:0; font-size: 1.2rem; color: #e68a00;">{int(saldo)} Goles</h2>
+                        <h2 style="margin:0; font-size: 2.0rem; color: #e68a00;">{int(saldo)} Goles</h2>
                     </div>
                 """, unsafe_allow_html=True)
             
@@ -168,7 +168,7 @@ if aba == "Meu Painel":
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #00d4ff;">
                         <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">STATUS</p>
-                        <h2 style="margin:0; font-size: 2rem; color: #ffffff;">{status['nivel']}</h2>
+                        <h2 style="margin:0; font-size: 2.0rem; color: #ffffff;">{status['nivel']}</h2>
                     </div>
                 """, unsafe_allow_html=True)
             
@@ -176,7 +176,7 @@ if aba == "Meu Painel":
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #ff4b4b;">
                         <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">INATIVIDADE</p>
-                        <h2 style="margin:0; font-size: 1.1rem; color: #ffffff;">{dias_inatividade} dias</h2>
+                        <h2 style="margin:0; font-size: 2.0rem; color: #ffffff;">{dias_inatividade} dias</h2>
                     </div>
                 """, unsafe_allow_html=True)
 
