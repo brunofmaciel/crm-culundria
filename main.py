@@ -152,7 +152,7 @@ if aba == "Meu Painel":
                         
                         # EXTRATO VISUAL (Usando seus cabeçalhos exatos)
                         # Nota: Usei os nomes que você enviou. Verifique se 'Bonus_Pedido' tem underline ou espaço.
-                        colunas_ver = ['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']
+                        colunas_ver = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']
                         extrato = minhas_vendas[colunas_ver].copy()
                         extrato['Data_Venda'] = extrato['Data_Venda'].dt.strftime('%d/%m/%Y')
                         extrato.columns = ['Data', 'Estilo', 'Litros', 'Goles']
@@ -172,6 +172,7 @@ if aba == "Meu Painel":
             st.session_state.logado = False
             st.session_state.dados_usuario = None
             st.rerun()
+            
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
 # ==========================================
