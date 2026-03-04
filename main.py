@@ -108,7 +108,6 @@ if aba == "Meu Painel":
                                 (df_c['Senha'].astype(str) == str(senha_login))]
                     
                     if not user.empty:
-                        # GRAVAÇÃO SEGURA NA SESSÃO
                         st.session_state.logado = True
                         st.session_state.dados_usuario = user.iloc[0].to_dict()
                         st.success("Login realizado! Abrindo seu barril...")
@@ -119,55 +118,77 @@ if aba == "Meu Painel":
                     st.error(f"Erro de conexão com a planilha: {e}")
     
     else:
-        # --- O PAINEL QUE ESTAVA SUMINDO ---
         u = st.session_state.get('dados_usuario')
         
         if u:
             st.title(f"🍻 Painel do Confrade")
             st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
             
-            # 1. MÉTRICAS BÁSICAS
+            # --- 1. PROCESSAMENTO DE DADOS (INATIVIDADE) ---
+            dias_inatividade = 0
+            meu_hist = pd.DataFrame()
+            
+            try:
+                sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
+                df_v = pd.DataFrame(sh_v.get_all_records())
+                
+                # Filtra pelo CPF e limpa espaços
+                df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.strip()
+                meu_hist = df_v[df_v['ID_Cliente'] == str(u['ID_Cliente']).strip()].copy()
+                
+                if not meu_hist.empty:
+                    # Converte a coluna Data_Venda para data real
+                    meu_hist['Data_Venda'] = pd.to_datetime(meu_hist['Data_Venda'], dayfirst=True, errors='coerce')
+                    meu_hist = meu_hist.dropna(subset=['Data_Venda']) # Remove erros de data
+                    
+                    if not meu_hist.empty:
+                        ultima_compra = meu_hist['Data_Venda'].max()
+                        dias_inatividade = (pd.Timestamp.now() - ultima_compra).days
+            except:
+                pass
+
+            # --- 2. MÉTRICAS BÁSICAS ---
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
             
-            c1, c2 = st.columns(2)
-            c1.metric("Saldo de Goles", f"{int(saldo)} 🍺")
-            c2.metric("Seu Nível", status['nivel'])
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Saldo de Goles", f"{int(saldo)} 🍺")
+            with c2:
+                st.metric("Seu Nível", status['nivel'])
+            with c3:
+                st.metric("Inatividade", f"{dias_inatividade} dias")
             
-            # 2. BARRA DE PROGRESSO
+            # --- 3. BARRA DE PROGRESSO E ALERTA DE EXPIRAÇÃO ---
             st.write(f"**Status:** {status['desc']}")
             limite = status['proximo_pts'] if status['proximo_pts'] > 0 else 1
             progresso = min(float(saldo) / limite, 1.0)
             st.progress(progresso)
-            st.caption(f"💡 {status['msg']}")
             
-            # 3. HISTÓRICO DE BARRIS (BUSCA DIRETA)
+            # Lógica de Expiração (365 dias)
+            dias_restantes = 365 - dias_inatividade
+            if dias_restantes <= 30:
+                st.warning(f"⚠️ Atenção! Seus pontos expiram em {dias_restantes} dias. Peça um novo barril!")
+            else:
+                st.info(f"💡 {status['msg']} (Pontos válidos por mais {dias_restantes} dias)")
+
+            # --- 4. HISTÓRICO DE BARRIS (TABELA) ---
             st.write("---")
             st.subheader("🛢️ Histórico de Consumo")
-            try:
-                sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-                df_v = pd.DataFrame(sh_v.get_all_records())
-                # Filtra pelo CPF logado
-                meu_hist = df_v[df_v['ID_Cliente'].astype(str) == str(u['ID_Cliente'])]
-                
-                if not meu_hist.empty:
-                    # Exibe apenas colunas principais
-                    exibir = meu_hist[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']]
-                    st.table(exibir.sort_index(ascending=False))
-                else:
-                    st.info("Você ainda não registrou barris. Peça o seu primeiro!")
-            except:
-                st.caption("Histórico de barris em atualização...")
+            
+            if not meu_hist.empty:
+                # Formata para exibição
+                exibir = meu_hist[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']].copy()
+                exibir['Data_Venda'] = exibir['Data_Venda'].dt.strftime('%d/%m/%Y')
+                exibir.columns = ['Data', 'Estilo', 'Litros', 'Goles Ganhos']
+                st.table(exibir.sort_index(ascending=False))
+            else:
+                st.info("Você ainda não registrou barris. Peça o seu primeiro!")
 
-            # 4. BOTÃO DE SAIR
-            if st.button("🚪 SAIR DA CONFRARIA"):
+            # --- 5. BOTÃO DE SAIR ---
+            if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
                 st.session_state.logado = False
                 st.session_state.dados_usuario = None
-                st.rerun()
-        else:
-            st.warning("Ops! Não encontramos seus dados. Por favor, saia e entre novamente.")
-            if st.button("RELOGAR"):
-                st.session_state.logado = False
                 st.rerun()
 
 # ==========================================
