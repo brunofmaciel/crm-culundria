@@ -90,43 +90,43 @@ with st.sidebar:
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
     if aba == "Meu Painel":
-    if not st.session_state.logado:
+            if not st.session_state.logado:
         # --- AQUI VAI TODO O SEU CÓDIGO DE LOGIN QUE VOCÊ POSTOU ---
         st.title("🍺 Acesso à Confraria")
         # ... (seu código de login e formulário) ...
         
-    else:
+        else:
         st.info("🔍 Iniciando carregamento do painel...")
         u = st.session_state.get('dados_usuario')
         
-        if not u:
+            if not u:
             st.error("ERRO: Dados do usuário não encontrados na sessão.")
             st.stop()
 
         # 1. TESTE DE RENDERIZAÇÃO BÁSICA
-        try:
+            try:
             st.title(f"🍻 Painel de {u.get('Nome_Completo', 'Confrade')}")
             saldo_p = u.get('Saldo_Atual', 0)
             st.metric("Seu Saldo", f"{saldo_p} Goles")
             st.success("✅ Parte 1 (Métricas) carregada.")
-        except Exception as e:
+            except Exception as e:
             st.error(f"❌ Falha na Parte 1: {e}")
 
         # 2. TESTE DE CONEXÃO COM A PLANILHA
         st.write("---")
-        try:
+            try:
             st.write("📡 Tentando conectar à aba VENDAS...")
             sh = client.open(NOME_PLANILHA)
             aba_v = sh.worksheet("VENDAS")
             dados_v = aba_v.get_all_records()
             df_vendas = pd.DataFrame(dados_v)
             st.success(f"✅ Parte 2 (Planilha) conectada. Linhas encontradas: {len(df_vendas)}")
-        except Exception as e:
+            except Exception as e:
             st.error(f"❌ Falha na Parte 2: {e}")
             st.stop()
 
         # 3. TESTE DE FILTRO DE DADOS
-        try:
+            try:
             cpf_busca = str(u['ID_Cliente']).strip()
             df_vendas['ID_Cliente'] = df_vendas['ID_Cliente'].astype(str).str.strip()
             minhas_vendas = df_vendas[df_vendas['ID_Cliente'] == cpf_busca].copy()
@@ -134,18 +134,18 @@ with st.sidebar:
             st.write(f"Filtrando CPF: {cpf_busca}...")
             st.write(f"Compras encontradas para este CPF: {len(minhas_vendas)}")
             
-            if not minhas_vendas.empty:
+                if not minhas_vendas.empty:
                 # Teste das colunas específicas que você passou
                 colunas_planilha = ['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']
                 st.dataframe(minhas_vendas[colunas_planilha])
                 st.success("✅ Parte 3 (Histórico) renderizada.")
-            else:
+                else:
                 st.warning("Nenhuma compra vinculada a este CPF na aba VENDAS.")
-        except Exception as e:
+            except Exception as e:
             st.error(f"❌ Falha na Parte 3 (Colunas/Filtro): {e}")
 
         # 4. BOTÃO DE SAIR
-        if st.button("SAIR"):
+            if st.button("SAIR"):
             st.session_state.logado = False
             st.rerun()
             
