@@ -113,7 +113,7 @@ st.write("---")
 if st.button("Esqueci minha senha"):
     if cpf_login:
         # Link do seu WhatsApp com mensagem pré-definida
-        seu_numero = "55XXXXXXXXXXX" # <--- COLOQUE SEU WHATSAPP AQUI (com DDD)
+        seu_numero = "5535998732583" # <--- COLOQUE SEU WHATSAPP AQUI (com DDD)
         mensagem = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
         link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(mensagem)}"
         
