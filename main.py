@@ -154,14 +154,29 @@ elif aba == "Fazer Parte da Confraria":
 # ==========================================
 # ABA 4: ÁREA DO MESTRE
 # ==========================================
+# ==========================================
+# ABA 4: ÁREA DO MESTRE (VERSÃO ANTI-ERRO)
+# ==========================================
 elif aba == "Área do Mestre":
     st.title("🏰 Área do Mestre")
     pwd = st.text_input("Senha:", type="password", key="m_pwd")
     if pwd == st.secrets["admin_password"]:
         try:
-            df_v = pd.DataFrame(client.open(NOME_PLANILHA).worksheet("VENDAS").get_all_records())
+            # Lendo a aba VENDAS com proteção contra vazios
+            sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
+            data_v = sh_v.get_all_values()
+            df_v = pd.DataFrame(data_v[1:], columns=data_v[0])
+            df_v = df_v.loc[:, df_v.columns != ''] # Mata colunas fantasmas
+            
+            # Converte litragem para número
             df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
+            
             st.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
+            
             if 'Estilo Chopp' in df_v.columns:
-                st.bar_chart(df_v.groupby('Estilo Chopp')['Litragem_Total'].sum())
-        except Exception as e: st.error(f"Erro: {e}")
+                st.subheader("🍺 Estilos mais pedidos")
+                vendas_estilo = df_v.groupby('Estilo Chopp')['Litragem_Total'].sum()
+                st.bar_chart(vendas_estilo)
+                
+        except Exception as e: 
+            st.error(f"Erro ao processar a planilha: {e}")
