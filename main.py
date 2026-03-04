@@ -90,8 +90,6 @@ opcoes_menu = ["Meu Painel (Login)", "Loja de Souvenirs", "Fazer Parte da Confra
 if "aba_selecionada" not in st.session_state:
     st.session_state.aba_selecionada = "Meu Painel (Login)"
 
-aba = st.sidebar.radio("Navegação:", opcoes_menu, index=opcoes_menu.index(st.session_state.aba_selecionada))
-st.session_state.aba_selecionada = aba
 
 # ==========================================
 # ABA 1: LOGIN E PAINEL (COM SALDO)
