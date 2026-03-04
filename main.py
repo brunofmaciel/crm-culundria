@@ -115,15 +115,7 @@ if aba == "Meu Painel":
         st.progress(progresso)
         st.caption(status['msg'])
         
-        # 3. ÁREA DE QR CODE DO CLIENTE (PARA O MESTRE DAR PONTOS)
-        st.write("---")
-        st.subheader("🆔 Meu QR Code de Confrade")
-        st.write("Apresente este código ao Mestre para ganhar novos pontos!")
-        
-        # Gera QR Code com o CPF do cliente
-        qr_identificacao = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={u['ID_Cliente']}"
-        st.image(qr_identificacao, width=200)
-        
+             
         # BOTÃO DE SAIR
         if st.button("LOGOUT / SAIR"):
             st.session_state.logado = False
