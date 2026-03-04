@@ -89,65 +89,183 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
-    if aba == "Meu Painel":
-            if not st.session_state.logado:
-        # --- AQUI VAI TODO O SEU CÓDIGO DE LOGIN QUE VOCÊ POSTOU ---
+if aba == "Meu Painel":
+    if not st.session_state.get('logado', False):
         st.title("🍺 Acesso à Confraria")
-        # ... (seu código de login e formulário) ...
         
-        else:
-        st.info("🔍 Iniciando carregamento do painel...")
+        with st.form("login_form"):
+            cpf_login = st.text_input("Digite seu CPF (apenas números)")
+            senha_login = st.text_input("Sua Senha", type="password")
+            btn_entrar = st.form_submit_button("ENTRAR NA CONFRARIA")
+            
+            if btn_entrar:
+                try:
+                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    df_c = pd.DataFrame(sh_c.get_all_records())
+                    
+                    # Filtro garantindo que tudo seja Texto
+                    user = df_c[(df_c['ID_Cliente'].astype(str) == str(cpf_login)) & 
+                                (df_c['Senha'].astype(str) == str(senha_login))]
+                    
+                    if not user.empty:
+                        # GRAVAÇÃO SEGURA NA SESSÃO
+                        st.session_state.logado = True
+                        st.session_state.dados_usuario = user.iloc[0].to_dict()
+                        st.success("Login realizado! Abrindo seu barril...")
+                        st.rerun()
+                    else:
+                        st.error("CPF ou Senha não encontrados.")
+                except Exception as e:
+                    st.error(f"Erro de conexão com a planilha: {e}")
+    
+    else:
+        # --- O PAINEL QUE ESTAVA SUMINDO ---
         u = st.session_state.get('dados_usuario')
         
-            if not u:
-            st.error("ERRO: Dados do usuário não encontrados na sessão.")
-            st.stop()
-
-        # 1. TESTE DE RENDERIZAÇÃO BÁSICA
-            try:
-            st.title(f"🍻 Painel de {u.get('Nome_Completo', 'Confrade')}")
-            saldo_p = u.get('Saldo_Atual', 0)
-            st.metric("Seu Saldo", f"{saldo_p} Goles")
-            st.success("✅ Parte 1 (Métricas) carregada.")
-            except Exception as e:
-            st.error(f"❌ Falha na Parte 1: {e}")
-
-        # 2. TESTE DE CONEXÃO COM A PLANILHA
-        st.write("---")
-            try:
-            st.write("📡 Tentando conectar à aba VENDAS...")
-            sh = client.open(NOME_PLANILHA)
-            aba_v = sh.worksheet("VENDAS")
-            dados_v = aba_v.get_all_records()
-            df_vendas = pd.DataFrame(dados_v)
-            st.success(f"✅ Parte 2 (Planilha) conectada. Linhas encontradas: {len(df_vendas)}")
-            except Exception as e:
-            st.error(f"❌ Falha na Parte 2: {e}")
-            st.stop()
-
-        # 3. TESTE DE FILTRO DE DADOS
-            try:
-            cpf_busca = str(u['ID_Cliente']).strip()
-            df_vendas['ID_Cliente'] = df_vendas['ID_Cliente'].astype(str).str.strip()
-            minhas_vendas = df_vendas[df_vendas['ID_Cliente'] == cpf_busca].copy()
+        if u:
+            st.title(f"🍻 Painel do Confrade")
+            st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
             
-            st.write(f"Filtrando CPF: {cpf_busca}...")
-            st.write(f"Compras encontradas para este CPF: {len(minhas_vendas)}")
+            # 1. MÉTRICAS BÁSICAS
+            saldo = u.get('Saldo_Atual', 0)
+            status = calcular_status_confraria(saldo)
             
-                if not minhas_vendas.empty:
-                # Teste das colunas específicas que você passou
-                colunas_planilha = ['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']
-                st.dataframe(minhas_vendas[colunas_planilha])
-                st.success("✅ Parte 3 (Histórico) renderizada.")
+            c1, c2 = st.columns(2)
+            c1.metric("Saldo de Goles", f"{int(saldo)} 🍺")
+            c2.metric("Seu Nível", status['nivel'])
+            
+            # 2. BARRA DE PROGRESSO
+            st.write(f"**Status:** {status['desc']}")
+            limite = status['proximo_pts'] if status['proximo_pts'] > 0 else 1
+            progresso = min(float(saldo) / limite, 1.0)
+            st.progress(progresso)
+            st.caption(f"💡 {status['msg']}")
+            
+            # 3. HISTÓRICO DE BARRIS (BUSCA DIRETA)
+            st.write("---")
+            st.subheader("🛢️ Histórico de Consumo")
+            try:
+                sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
+                df_v = pd.DataFrame(sh_v.get_all_records())
+                # Filtra pelo CPF logado
+                meu_hist = df_v[df_v['ID_Cliente'].astype(str) == str(u['ID_Cliente'])]
+                
+                if not meu_hist.empty:
+                    # Exibe apenas colunas principais
+                    exibir = meu_hist[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']]
+                    st.table(exibir.sort_index(ascending=False))
                 else:
-                st.warning("Nenhuma compra vinculada a este CPF na aba VENDAS.")
-            except Exception as e:
-            st.error(f"❌ Falha na Parte 3 (Colunas/Filtro): {e}")
+                    st.info("Você ainda não registrou barris. Peça o seu primeiro!")
+            except:
+                st.caption("Histórico de barris em atualização...")
 
-        # 4. BOTÃO DE SAIR
-            if st.button("SAIR"):
-            st.session_state.logado = False
-            st.rerun()
+            # 4. BOTÃO DE SAIR
+            if st.button("🚪 SAIR DA CONFRARIA"):
+                st.session_state.logado = False
+                st.session_state.dados_usuario = None
+                st.rerun()
+        else:
+            st.warning("Ops! Não encontramos seus dados. Por favor, saia e entre novamente.")
+            if st.button("RELOGAR"):
+                st.session_state.logado = False
+                st.rerun()
+
+# ==========================================
+# ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
+# ==========================================
+elif aba == "Loja de Souvenirs":
+    st.title("🛍️ Loja de Souvenirs")
+    
+    if not st.session_state.logado:
+        st.warning("Faça login no 'Meu Painel' para acessar a loja!")
+    else:
+        # 1. BUSCA PRODUTOS DA PLANILHA EM TEMPO REAL
+        try:
+            sh = client.open(NOME_PLANILHA)
+            aba_p = sh.worksheet("PRODUTOS")
+            df_p = pd.DataFrame(aba_p.get_all_records())
+            # Filtra apenas ATIVO = SIM
+            produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
+        except Exception as e:
+            st.error(f"Erro ao carregar catálogo: {e}")
+            st.stop()
+
+        # 2. SINCRONIZAÇÃO DE SALDO REAL
+        try:
+            aba_c = sh.worksheet("CLIENTES")
+            c = st.session_state.dados_usuario
+            cpf_logado = str(c['ID_Cliente'])
+            celula_usuario = aba_c.find(cpf_logado)
+            # Saldo na Coluna K (11)
+            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value)
+            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
+        except:
+            st.error("Erro ao sincronizar saldo.")
+            st.stop()
+
+        # 3. EXIBIÇÃO DOS PRODUTOS
+        cols = st.columns(2)
+        for i, p in enumerate(produtos):
+            with cols[i % 2]:
+                st.markdown(f"""
+                    <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
+                        <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                if p['URL_Imagem']:
+                    st.image(p['URL_Imagem'], use_container_width=True)
+                else:
+                    st.info("Foto em breve!")
+
+                st.markdown(f"""
+                    <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
+                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # 4. BOTÃO DE RESGATE SEGURO
+                if saldo_real >= float(p['Pontos']):
+                    if st.button(f"RESGATAR {p['Nome'].upper()}", key=f"btn_res_{i}"):
+                        with st.spinner("Processando resgate..."):
+                            try:
+                                voucher = gerar_codigo()
+                                novo_saldo = saldo_real - float(p['Pontos'])
+                                
+                                # Débito na planilha
+                                aba_c.update_cell(celula_usuario.row, 11, novo_saldo)
+                                
+                                # Registro do Resgate
+                                aba_r = sh.worksheet("RESGATES")
+                                aba_r.append_row([
+                                    voucher, cpf_logado, p['Nome'], p['Pontos'], 
+                                    pd.Timestamp.now().strftime("%d/%m/%Y"), "Pendente"
+                                ])
+                                
+                                # QR Code
+                                url_base = "https://golesdevantagemculundria.streamlit.app" 
+                                link_resgate = f"{url_base}?voucher={voucher}"
+                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(link_resgate)}"
+                                
+                                st.success(f"Confirmado! -{p['Pontos']} Goles.")
+                                st.markdown(f"""
+                                    <div style='text-align: center; background-color: #ffffff; padding: 20px; border-radius: 15px; border: 5px solid #e68a00;'>
+                                        <p style='color: #0b0e27; font-weight: bold;'>MOSTRE NO BALCÃO:</p>
+                                        <img src='{qr_url}' style='width: 180px;'>
+                                        <h1 style='color: #0b0e27; margin: 0;'>{voucher}</h1>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                st.balloons()
+                                st.session_state.dados_usuario['Saldo_Atual'] = novo_saldo
+                            except Exception as e:
+                                st.error(f"Erro: {e}")
+                else:
+                    st.button("Saldo Insuficiente", key=f"btn_off_{i}", disabled=True)
+
+# ==========================================
+# ABA 3: CADASTRO (FAZER PARTE DA CONFRARIA)
+# ==========================================
+
             
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
