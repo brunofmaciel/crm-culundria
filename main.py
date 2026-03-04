@@ -61,9 +61,6 @@ def calcular_status_confraria(pontos):
 if "logado" not in st.session_state: st.session_state.logado = False
 if "dados_usuario" not in st.session_state: st.session_state.dados_usuario = None
 
-query_params = st.query_params
-voucher_detectado = query_params.get("voucher", None)
-
 # Mantenha os nomes IGUAIS aos que usará nos ELIFs abaixo
 opcoes_menu = ["Meu Painel", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
 
