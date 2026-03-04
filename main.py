@@ -94,45 +94,38 @@ if aba == "Meu Painel": # <--- Nome batendo exatamente com a lista opcoes_menu
                 except Exception as e: # <--- ADICIONE ESTAS DUAS LINHAS AQUI
                             st.error(f"Erro ao acessar banco de dados: {e}")
                     
-        # --- RECUPERAÇÃO DE SENHA (FORA DO FORMULÁRIO) ---
+        # --- RECUPERAÇÃO DE SENHA (FORA DO LOGIN) ---
         st.write("---")
         if st.button("Esqueci minha senha"):
-            # O truque: verificamos se o usuário digitou algo no campo acima
             if cpf_login and len(cpf_login) >= 11:
                 import urllib.parse
-                seu_numero = "5535998732583" # <--- SEU WHATSAPP AQUI
+                seu_numero = "55XXXXXXXXXXX" # <--- COLOQUE SEU WHATSAPP AQUI
                 msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
                 link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
                 
-                st.info("Clique no botão abaixo para falar com o Mestre:")
-                st.link_button("📩 SOLICITAR SENHA VIA WHATSAPP", link_zap)
+                st.info("Solicite sua senha ao Mestre:")
+                st.link_button("📩 SOLICITAR VIA WHATSAPP", link_zap)
             else:
-                st.warning("⚠️ Digite seu CPF no campo de login acima primeiro para que eu possa te identificar.")
-# ==========================================
-# ABA 2: LOJA DE SOUVENIRS
-# ==========================================
-elif aba == "Loja de Souvenirs":
+                st.warning("⚠️ Digite seu CPF no campo acima para recuperar a senha.")
+
+# --- LINHA 137: INÍCIO DA LOJA ---
+elif aba == "Loja de Souvenirs": # <--- ESTE ELIF DEVE ESTAR ALINHADO COM O "if aba == 'Meu Painel':"
     st.title("🛍️ Loja de Souvenirs")
     
     if not st.session_state.logado:
         st.warning("Faça login no 'Meu Painel' para acessar a loja!")
     else:
-        import urllib.parse
-        c = st.session_state.dados_usuario
-        cpf_logado = str(c['ID_Cliente'])
-        
-        # 1. SINCRONIZAÇÃO DE SALDO REAL (SEGURANÇA)
+        # 1. BUSCA PRODUTOS DA PLANILHA (DINÂMICO)
         try:
             sh = client.open(NOME_PLANILHA)
-            aba_c = sh.worksheet("CLIENTES")
-            celula_usuario = aba_c.find(cpf_logado)
-            # Buscando Saldo Atual na Coluna K (11)
-            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value)
-            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
+            aba_p = sh.worksheet("PRODUTOS")
+            df_p = pd.DataFrame(aba_p.get_all_records())
+            
+            # Filtra apenas os que estão marcados como ATIVO = SIM
+            produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
         except Exception as e:
-            st.error(f"Erro ao sincronizar saldo: {e}")
+            st.error(f"Erro ao carregar catálogo: {e}")
             st.stop()
-
         # 2. DEFINIÇÃO DOS PRODUTOS COM IMAGENS E DESCRIÇÃO
         elif aba == "Loja de Souvenirs":
     st.title("🛍️ Loja de Souvenirs")
