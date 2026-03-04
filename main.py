@@ -178,7 +178,7 @@ if aba == "Meu Painel":
             
             if not meu_hist.empty:
                 # Formata para exibição
-                exibir = meu_hist[['Data_Venda', 'Estilo Chopp', 'Litragem_Total', 'Total Pontos']].copy()
+                exibir = meu_hist[['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']].copy()
                 exibir['Data_Venda'] = exibir['Data_Venda'].dt.strftime('%d/%m/%Y')
                 exibir.columns = ['Data', 'Estilo', 'Litros', 'Goles Ganhos']
                 st.table(exibir.sort_index(ascending=False))
