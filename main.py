@@ -1,7 +1,13 @@
 import streamlit as st
 import gspread
-from google.oauth2.service_account import Credentials
+import random  # <--- ADICIONE ESTE
+import string  # <--- ADICIONE ESTE
 import pandas as pd
+from google.oauth2.service_account import Credentials
+
+# --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
+def gerar_codigo():
+    return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
@@ -108,32 +114,54 @@ if aba == "Meu Painel (Login)":
 elif aba == "Loja de Souvenirs":
     st.title("🛍️ Loja de Souvenirs")
     if not st.session_state.logado:
-        st.warning("Faça login para ver seu saldo!")
+        st.warning("Faça login para acessar a loja!")
     else:
-        u = st.session_state.dados_usuario
-        saldo = float(u.get('Saldo_Atual', u.get('Pontos_Totais', 0)))
-        st.subheader(f"Saldo Disponível: {int(saldo)} Goles")
+        c = st.session_state.dados_usuario
+        saldo = float(c.get('Saldo_Atual', c.get('Pontos_Totais', 0)))
+        st.subheader(f"Seu Saldo: {int(saldo)} Goles")
         
         produtos = [
-            {"nome": "1 Pint (500ml)", "pts": 150, "icon": "🍺"},
-            {"nome": "Growler Pet 1L", "pts": 250, "icon": "🧴"},
-            {"nome": "Boné Culundria", "pts": 800, "icon": "🧢"},
-            {"nome": "Camiseta Confraria", "pts": 1200, "icon": "👕"}
+            {"nome": "1 Pint (500ml)", "pontos": 150, "img": "🍺"},
+            {"nome": "Growler Pet 1L", "pontos": 250, "img": "🧴"},
+            {"nome": "Boné Culundria", "pontos": 800, "img": "🧢"},
+            {"nome": "Camiseta Confraria", "pontos": 1200, "img": "👕"}
         ]
         
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
-                st.markdown(f"<div style='background-color: #161b3d; padding: 15px; border-radius: 10px; border: 1px solid #e68a00;'><h4>{p['icon']} {p['nome']}</h4><p>{p['pts']} Goles</p></div>", unsafe_allow_html=True)
-                if saldo >= p['pts']:
-                    if st.button(f"Resgatar {p['nome']}", key=f"btn_{i}"):
+                st.markdown(f"<div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border: 1px solid #e68a00;'><h3>{p['img']} {p['nome']}</h3><p>{p['pontos']} Goles</p></div>", unsafe_allow_html=True)
+                
+                # LÓGICA DO BOTÃO COM VOUCHER
+                if saldo >= p['pontos']:
+                    if st.button(f"Resgatar {p['nome']}", key=f"btn_loja_{i}"):
+                        voucher = gerar_codigo()
                         try:
-                            client.open(NOME_PLANILHA).worksheet("INDICAÇÕES").append_row([u['ID_Cliente'], f"RESGATE: {p['nome']}", p['pts'], "Pendente"])
-                            st.success("Pedido enviado!")
+                            # Tenta salvar na aba RESGATES
+                            aba_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
+                            aba_r.append_row([
+                                voucher, 
+                                c['ID_Cliente'], 
+                                p['nome'], 
+                                p['pontos'], 
+                                pd.Timestamp.now().strftime("%d/%m/%Y"), 
+                                "Pendente"
+                            ])
+                            
+                            # Mostra o comprovante visual para o cliente
+                            st.success("Resgate realizado com sucesso!")
+                            st.markdown(f"""
+                                <div style='text-align: center; background-color: #e68a00; padding: 20px; border-radius: 15px; color: white;'>
+                                    <p style='margin:0;'>APRESENTE NO BALCÃO:</p>
+                                    <h1 style='margin:0; font-size: 3em;'>{voucher}</h1>
+                                    <p style='margin:0;'>{p['nome']}</p>
+                                </div>
+                            """, unsafe_allow_html=True)
                             st.balloons()
-                        except: st.error("Erro no resgate.")
-                else: st.button("Saldo Insuficiente", key=f"btn_{i}", disabled=True)
-
+                        except Exception as e:
+                            st.error(f"Erro ao registrar resgate: {e}. Verifique se a aba 'RESGATES' existe.")
+                else:
+                    st.button("Saldo Insuficiente", key=f"btn_loja_{i}", disabled=True)
 # ==========================================
 # ABA 3: CADASTRO
 # ==========================================
