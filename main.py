@@ -4,9 +4,14 @@ import random  # <--- ADICIONE ESTE
 import string  # <--- ADICIONE ESTE
 import pandas as pd
 import urllib.parse
-from google.oauth2.service_account import Credentials
+import Credentials
 
-# --- LOGICA DE CAPTURA DE VOUCHER (COLOQUE NO TOPO) ---
+from google.oauth2.service_account 
+
+# --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
+def gerar_codigo():
+    return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher")
 
@@ -14,9 +19,6 @@ voucher_detectado = query_params.get("voucher")
 if voucher_detectado:
     st.session_state.aba_selecionada = "Área do Mestre"
     # Opcional: st.toast(f"Voucher {voucher_detectado} detectado!")
-# --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
-def gerar_codigo():
-    return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
