@@ -48,99 +48,100 @@ def calcular_status_confraria(pontos):
     else:
         return {"nivel": "Patrimônio da Culundria", "desc": "Você é parte da nossa história sagrada.", "cor": "#ffcc33", "proximo_pts": p, "msg": "Obrigado, lenda! 🍻"}
 
-# --- 3. LÓGICA DE NAVEGAÇÃO ---
-opcoes_menu = ["Meu Painel (Login)", "Fazer Parte da Confraria", "Área do Mestre"]
+# --- 3. LÓGICA DE NAVEGAÇÃO ATUALIZADA ---
+opcoes_menu = ["Meu Painel (Login)", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
 
-if "aba_selecionada" not in st.session_state or st.session_state.aba_selecionada not in opcoes_menu:
+if "aba_selecionada" not in st.session_state:
     st.session_state.aba_selecionada = "Meu Painel (Login)"
-if "logado" not in st.session_state:
-    st.session_state.logado = False
 
-indice_atual = opcoes_menu.index(st.session_state.aba_selecionada)
-
-with st.sidebar:
-    try: st.image("logoculundria.png", use_container_width=True)
-    except: st.warning("Logo não encontrada.")
-    st.markdown("<h2 style='text-align: center;'>Culundria</h2>", unsafe_allow_html=True)
-    aba = st.sidebar.radio("Navegação:", opcoes_menu, index=indice_atual)
-    st.session_state.aba_selecionada = aba
-    if st.session_state.logado:
-        if st.sidebar.button("SAIR DA CONFRARIA"):
-            st.session_state.logado = False
-            st.session_state.dados_usuario = None
-            st.rerun()
+aba = st.sidebar.radio("Navegação:", opcoes_menu, index=opcoes_menu.index(st.session_state.aba_selecionada))
+st.session_state.aba_selecionada = aba
 
 # ==========================================
-# ABA 1: LOGIN E PAINEL DO CLIENTE
+# ABA 1: LOGIN E PAINEL (COM SALDO)
 # ==========================================
 if aba == "Meu Painel (Login)":
     if not st.session_state.logado:
         st.title("🍺 Goles de Vantagem")
-        col_l1, col_l2 = st.columns(2)
-        with col_l1: cpf_input = st.text_input("CPF (apenas números):")
-        with col_l2: senha_input = st.text_input("Senha:", type="password")
-
-        if st.button("ENTRAR NA CONFRARIA"):
-            try:
-                sheet = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                df = pd.DataFrame(sheet.get_all_records())
-                
-                # Normalização blindada (zero à esquerda)
-                df['ID_Cliente'] = df['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
-                cpf_digitado = "".join(filter(str.isdigit, str(cpf_input))).strip().zfill(11)
-                
-                cliente = df[df['ID_Cliente'] == cpf_digitado]
-
-                if not cliente.empty:
-                    c = cliente.iloc[0]
-                    if str(senha_input).strip() == str(c['Senha']).strip():
-                        st.session_state.logado = True
-                        st.session_state.dados_usuario = c.to_dict()
-                        st.rerun()
-                    else: st.error("Senha incorreta!")
-                else: st.warning(f"CPF {cpf_digitado} não localizado.")
-
-            except Exception as e: st.error(f"Erro técnico na busca: {e}")
-        
-        st.write("")
-        if st.button("✨ Não tem conta? Cadastre-se aqui"):
-            st.session_state.aba_selecionada = "Fazer Parte da Confraria"
-            st.rerun()
+        # ... [Seu código de login aqui] ...
+        # [Mantenha o código de login que já funciona]
     else:
-        # PAINEL LOGADO (Mantido Original)
         c = st.session_state.dados_usuario
-        pontos = float(c.get('Pontos_Totais', 0))
-        resumo = calcular_status_confraria(pontos)
-        st.title(f"OLÁ, {c['Nome_Completo'].split()[0].upper()}! 🍻")
+        # Puxando os dois tipos de pontos da planilha
+        pts_acumulados = float(c.get('Pontos_Totais', 0))
+        saldo_disponivel = float(c.get('Saldo_Atual', pts_acumulados)) # Se K estiver vazio, usa o total
         
-        card_html = "<div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid " + resumo['cor'] + ";'>"
-        card_html += "<h2 style='margin:0; color: " + resumo['cor'] + "; font-size: 1.2em;'>STATUS: " + resumo['nivel'].upper() + "</h2>"
-        card_html += "<p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>\"" + resumo['desc'] + "\"</p>"
-        card_html += "<hr style='border: 0.1px solid #333;'>"
-        card_html += "<p style='color: #aaa; font-size: 0.85em; font-style: italic;'>" + resumo['msg'] + "</p>"
-        card_html += "</div>"
+        res = calcular_status_confraria(pts_acumulados)
+        st.title("OLÁ, " + str(c['Nome_Completo']).split()[0].upper() + "! 🍻")
         
-        # Exibindo o card
-        st.markdown(card_html, unsafe_allow_html=True)
+        # Dashboard de Goles
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("PONTOS TOTAIS (NÍVEL)", f"{int(pts_acumulados)} PTS")
+        with col2:
+            st.metric("SALDO PARA TROCA", f"{int(saldo_disponivel)} PTS", delta="Disponível na Loja")
 
-        progresso_val = min(pontos / resumo['proximo_pts'], 1.0) if resumo['proximo_pts'] > 0 else 1.0
+        # Card de Status
+        html_card = "<div style='background-color: #161b3d; padding: 25px; border-radius: 15px; border-left: 8px solid " + res['cor'] + ";'>"
+        html_card += "<h2 style='margin:0; color: " + res['cor'] + "; font-size: 1.2em;'>STATUS: " + res['nivel'].upper() + "</h2>"
+        html_card += "<p style='color: #ffffff; font-size: 1.1em; margin-top: 10px;'>\"" + res['desc'] + "\"</p></div>"
+        st.markdown(html_card, unsafe_allow_html=True)
+        
+        # Barra de Progresso
+        prog = min(pts_acumulados / res['proximo_pts'], 1.0) if res['proximo_pts'] > 0 else 1.0
         st.write("")
-        st.progress(progresso_val)
-        st.caption(f"Você já acumulou **{int(pontos)}** de **{int(resumo['proximo_pts'])}** pontos para o próximo nível.")
-        st.metric("MEUS GOLES ACUMULADOS", f"{int(pontos)} PTS")
+        st.progress(prog)
+        st.caption("Faltam " + str(int(res['proximo_pts'] - pts_acumulados)) + " pontos para o próximo nível.")
 
-        # Histórico
-        st.markdown("### 📜 MEU HISTÓRICO")
-        try:
-            sheet_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-            df_v = pd.DataFrame(sheet_v.get_all_records())
-            df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.zfill(11)
-            minhas_v = df_v[df_v['ID_Cliente'] == str(c['ID_Cliente'])]
-            if not minhas_v.empty:
-                st.table(minhas_v[['Data_Venda', 'Litragem_Total', 'Total Pontos']])
-            else: st.info("Nenhum barril registrado ainda.")
-        except: st.info("Buscando barris no histórico...")
+# ==========================================
+# ABA: LOJA DE SOUVENIRS (NOVA!)
+# ==========================================
+elif aba == "Loja de Souvenirs":
+    st.title("🛍️ Loja de Souvenirs")
+    
+    if not st.session_state.logado:
+        st.warning("Faça login para acessar a loja e ver seu saldo de goles!")
+    else:
+        c = st.session_state.dados_usuario
+        saldo = float(c.get('Saldo_Atual', c.get('Pontos_Totais', 0)))
+        
+        st.subheader("Seu Saldo: " + str(int(saldo)) + " Goles")
+        st.write("Troque seus goles acumulados por produtos exclusivos. Seus pontos de **Nível** não diminuem!")
+        
+        # Definição dos produtos da loja
+        produtos = [
+            {"nome": "1 Pint (500ml)", "pontos": 150, "img": "🍺", "desc": "Um copo cheio na nossa Taproom."},
+            {"nome": "Growler Pet 1L (Cheio)", "pontos": 250, "img": "🧴", "desc": "Escolha seu estilo favorito e leve para casa."},
+            {"nome": "Boné Culundria", "pontos": 800, "img": "🧢", "desc": "O acessório oficial do mestre cervejeiro."},
+            {"nome": "Camiseta Confraria", "pontos": 1200, "img": "👕", "desc": "Vista a camisa da nossa história."}
+        ]
+        
+        # Exibição em Grid
+        cols = st.columns(2)
+        for i, p in enumerate(produtos):
+            with cols[i % 2]:
+                container = "<div style='background-color: #161b3d; padding: 20px; border-radius: 10px; border: 1px solid #e68a00; margin-bottom: 10px;'>"
+                container += "<h3 style='margin:0; color: #e68a00;'>" + p['img'] + " " + p['nome'] + "</h3>"
+                container += "<p style='font-size: 0.9em; color: #aaa;'>" + p['desc'] + "</p>"
+                container += "<h4 style='color: #ffffff;'>" + str(p['pontos']) + " GOLES</h4></div>"
+                st.markdown(container, unsafe_allow_html=True)
+                
+                # Botão de Resgate
+                if saldo >= p['pontos']:
+                    if st.button(f"Resgatar {p['nome']}", key=f"btn_{i}"):
+                        # Aqui enviaremos o pedido para a aba INDICAÇÕES ou uma nova aba RESGATES
+                        try:
+                            aba_resgate = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
+                            # Registra o resgate: CPF, Produto, Pontos, Status
+                            aba_resgate.append_row([c['ID_Cliente'], "RESGATE: " + p['nome'], p['pontos'], "Pendente"])
+                            st.success("Solicitação enviada! Retire seu produto no balcão.")
+                            st.balloons()
+                        except:
+                            st.error("Erro ao processar resgate. Fale com o Mestre.")
+                else:
+                    st.button("Goles Insuficientes", key=f"btn_{i}", disabled=True)
 
+# ... [Mantenha as abas de Cadastro e Área do Mestre abaixo] ...
 # ==========================================
 # ABA 2: CADASTRO
 # ==========================================
