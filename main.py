@@ -53,7 +53,7 @@ def calcular_status_confraria(pontos):
     elif p <= 1000:
         return {"nivel": "Chegado", "desc": "A casa já é sua!", "cor": "#e68a00", "proximo_pts": 1000, "msg": "Continue para ser 'Tarimbado'."}
     elif p <= 2000:
-        return {"nivel": "Tarimbado", "desc": "Veterano de guerra!", "cor": "#d4a017", "proximo_pts": 2000, "msg": "Quase um Patrimônio!"}
+        return {"nivel": "Tarimbado", "desc": "Veterano de guerra!", "cor": "#d4a017", "proximo_pts": 2000, "msg": "Se torne um Patrimônio! Faça um novo pedido e supere os 2000 goles"}
     else:
         return {"nivel": "Patrimônio", "desc": "Você é uma lenda sagrada.", "cor": "#ffcc33", "proximo_pts": p, "msg": "Obrigado, lenda! 🍻"}
 
@@ -167,10 +167,10 @@ if aba == "Meu Painel":
             
             # Lógica de Expiração (365 dias)
             dias_restantes = 365 - dias_inatividade
-            if dias_restantes <= 30:
+            if dias_restantes <= 60:
                 st.warning(f"⚠️ Atenção! Seus pontos expiram em {dias_restantes} dias. Peça um novo barril!")
             else:
-                st.info(f"💡 {status['msg']} (Pontos válidos por mais {dias_restantes} dias)")
+                st.info(f"💡 {status['msg']} (Seus pontos expiram em {dias_restantes} dias! Faça um novo pedido e renove seu saldo)")
 
             # --- 4. HISTÓRICO DE BARRIS (TABELA) ---
             st.write("---")
