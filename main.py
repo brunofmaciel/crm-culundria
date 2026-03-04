@@ -34,6 +34,42 @@ except Exception as e:
 
 NOME_PLANILHA = "crm-culundria" 
 
+# --- 3. CONFIGURAÇÃO INICIAL E NAVEGAÇÃO (BLINDADA) ---
+
+# Garantimos que essas variáveis existam SEMPRE, logo no começo
+if "logado" not in st.session_state:
+    st.session_state.logado = False
+
+if "dados_usuario" not in st.session_state:
+    st.session_state.dados_usuario = None
+
+if "aba_selecionada" not in st.session_state:
+    st.session_state.aba_selecionada = "Meu Painel (Login)"
+
+# Definição das opções do menu
+opcoes_menu = ["Meu Painel (Login)", "Loja de Souvenirs", "Fazer Parte da Confraria", "Área do Mestre"]
+
+# Criamos a barra lateral e o seletor de abas
+with st.sidebar:
+    try:
+        st.image("logoculundria.png", use_container_width=True)
+    except:
+        st.warning("Logo não encontrada.")
+    
+    st.markdown("<h2 style='text-align: center;'>Culundria</h2>", unsafe_allow_html=True)
+    
+    # Aqui o radio lê e já atualiza a aba selecionada
+    aba = st.radio("Navegação:", opcoes_menu, index=opcoes_menu.index(st.session_state.aba_selecionada))
+    st.session_state.aba_selecionada = aba
+    
+    # Botão de Sair só aparece se estiver logado
+    if st.session_state.logado:
+        if st.button("SAIR DA CONFRARIA"):
+            st.session_state.logado = False
+            st.session_state.dados_usuario = None
+            st.rerun()
+
+# --- FIM DA CONFIGURAÇÃO INICIAL ---
 # --- FUNÇÃO DE NÍVEIS DA CONFRARIA ---
 def calcular_status_confraria(pontos):
     try: p = float(pontos)
