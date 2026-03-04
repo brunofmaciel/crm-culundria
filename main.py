@@ -75,59 +75,48 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
-if aba == "Meu Painel": # <--- Nome batendo exatamente com a lista opcoes_menu
+if aba == "Meu Painel":
     if not st.session_state.logado:
         st.title("🍺 Acesso à Confraria")
         
-        # 1. Definimos as variáveis ANTES do form para evitar NameError
         with st.container():
             cpf_login = st.text_input("Digite seu CPF (apenas números)", key="cpf_input_login")
             senha_login = st.text_input("Sua Senha", type="password", key="senha_input_login")
             
             if st.button("ENTRAR NA CONFRARIA"):
-                # --- LÓGICA DE LOGIN ---
                 try:
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     dados = sh_c.get_all_records()
                     df_c = pd.DataFrame(dados)
-
-                except Exception as e: # <--- ADICIONE ESTAS DUAS LINHAS AQUI
-                            st.error(f"Erro ao acessar banco de dados: {e}")
                     
-        # --- RECUPERAÇÃO DE SENHA (FORA DO LOGIN) ---
+                    # Busca usuário
+                    user = df_c[(df_c['ID_Cliente'].astype(str) == cpf_login) & (df_c['Senha'].astype(str) == senha_login)]
+                    
+                    if not user.empty:
+                        st.session_state.logado = True
+                        st.session_state.dados_usuario = user.iloc[0].to_dict()
+                        st.success("Login realizado! Carregando seu barril...")
+                        st.rerun()
+                    else:
+                        st.error("CPF ou Senha incorretos.")
+                except Exception as e:
+                    st.error(f"Erro ao acessar banco de dados: {e}")
+
         st.write("---")
         if st.button("Esqueci minha senha"):
             if cpf_login and len(cpf_login) >= 11:
-                import urllib.parse
                 seu_numero = "55XXXXXXXXXXX" # <--- COLOQUE SEU WHATSAPP AQUI
                 msg = f"Olá Mestre! Esqueci minha senha da Confraria. Meu CPF é: {cpf_login}"
                 link_zap = f"https://wa.me/{seu_numero}?text={urllib.parse.quote(msg)}"
-                
                 st.info("Solicite sua senha ao Mestre:")
                 st.link_button("📩 SOLICITAR VIA WHATSAPP", link_zap)
             else:
                 st.warning("⚠️ Digite seu CPF no campo acima para recuperar a senha.")
 
-# --- LINHA 137: INÍCIO DA LOJA ---
-elif aba == "Loja de Souvenirs": # <--- ESTE ELIF DEVE ESTAR ALINHADO COM O "if aba == 'Meu Painel':"
-    st.title("🛍️ Loja de Souvenirs")
-    
-    if not st.session_state.logado:
-        st.warning("Faça login no 'Meu Painel' para acessar a loja!")
-    else:
-        # 1. BUSCA PRODUTOS DA PLANILHA (DINÂMICO)
-        try:
-            sh = client.open(NOME_PLANILHA)
-            aba_p = sh.worksheet("PRODUTOS")
-            df_p = pd.DataFrame(aba_p.get_all_records())
-            
-            # Filtra apenas os que estão marcados como ATIVO = SIM
-            produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
-        except Exception as e:
-            st.error(f"Erro ao carregar catálogo: {e}")
-            st.stop()
-        # 2. DEFINIÇÃO DOS PRODUTOS COM IMAGENS E DESCRIÇÃO
-        elif aba == "Loja de Souvenirs":
+# ==========================================
+# ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
+# ==========================================
+elif aba == "Loja de Souvenirs":
     st.title("🛍️ Loja de Souvenirs")
     
     if not st.session_state.logado:
@@ -136,28 +125,28 @@ elif aba == "Loja de Souvenirs": # <--- ESTE ELIF DEVE ESTAR ALINHADO COM O "if 
         # 1. BUSCA PRODUTOS DA PLANILHA EM TEMPO REAL
         try:
             sh = client.open(NOME_PLANILHA)
-            # Carrega a aba PRODUTOS
             aba_p = sh.worksheet("PRODUTOS")
             df_p = pd.DataFrame(aba_p.get_all_records())
-            
-            # Filtra apenas os que estão marcados como ATIVO = SIM
+            # Filtra apenas ATIVO = SIM
             produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
         except Exception as e:
             st.error(f"Erro ao carregar catálogo: {e}")
             st.stop()
 
-        # 2. SINCRONIZAÇÃO DE SALDO (Mesma lógica de segurança anterior)
+        # 2. SINCRONIZAÇÃO DE SALDO REAL
         try:
             aba_c = sh.worksheet("CLIENTES")
             c = st.session_state.dados_usuario
-            celula_usuario = aba_c.find(str(c['ID_Cliente']))
-            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value) # Coluna K
+            cpf_logado = str(c['ID_Cliente'])
+            celula_usuario = aba_c.find(cpf_logado)
+            # Saldo na Coluna K (11)
+            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value)
             st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
         except:
             st.error("Erro ao sincronizar saldo.")
             st.stop()
 
-        # 3. EXIBIÇÃO EM GRID (Agora vindo do Banco de Dados)
+        # 3. EXIBIÇÃO DOS PRODUTOS
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
@@ -167,7 +156,6 @@ elif aba == "Loja de Souvenirs": # <--- ESTE ELIF DEVE ESTAR ALINHADO COM O "if 
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # Exibe imagem da planilha ou aviso se estiver vazio
                 if p['URL_Imagem']:
                     st.image(p['URL_Imagem'], use_container_width=True)
                 else:
@@ -178,55 +166,44 @@ elif aba == "Loja de Souvenirs": # <--- ESTE ELIF DEVE ESTAR ALINHADO COM O "if 
                         <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
                     </div>
                 """, unsafe_allow_html=True)
-                                
-                # 4. LÓGICA DE RESGATE COM DÉBITO REAL
-                if saldo_real >= p['pontos']:
-                    if st.button(f"RESGATAR {p['nome'].upper()}", key=f"btn_resgate_{i}"):
+                
+                # 4. BOTÃO DE RESGATE SEGURO
+                if saldo_real >= float(p['Pontos']):
+                    if st.button(f"RESGATAR {p['Nome'].upper()}", key=f"btn_res_{i}"):
                         with st.spinner("Processando resgate..."):
                             try:
-                                # A. Gera Voucher e calcula novo saldo
                                 voucher = gerar_codigo()
-                                novo_saldo = saldo_real - p['pontos']
+                                novo_saldo = saldo_real - float(p['Pontos'])
                                 
-                                # B. GRAVAÇÃO NA PLANILHA (DÉBITO IMEDIATO)
-                                # Atualiza saldo na Coluna K (11)
+                                # Débito na planilha
                                 aba_c.update_cell(celula_usuario.row, 11, novo_saldo)
                                 
-                                # Registra na aba RESGATES
+                                # Registro do Resgate
                                 aba_r = sh.worksheet("RESGATES")
                                 aba_r.append_row([
-                                    voucher, 
-                                    cpf_logado, 
-                                    p['nome'], 
-                                    p['pontos'], 
-                                    pd.Timestamp.now().strftime("%d/%m/%Y"), 
-                                    "Pendente"
+                                    voucher, cpf_logado, p['Nome'], p['Pontos'], 
+                                    pd.Timestamp.now().strftime("%d/%m/%Y"), "Pendente"
                                 ])
                                 
-                                # C. GERAÇÃO DO QR CODE
-                                # Troque pelo link do seu app real
+                                # QR Code
                                 url_app = "https://crm-culundria.streamlit.app/" 
-                                link_resgate = f"{url_app}?voucher={voucher}"
-                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_resgate)}"
+                                link_res = f"{url_app}?voucher={voucher}"
+                                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(link_res)}"
                                 
-                                st.success(f"Resgate confirmado! -{p['pontos']} Goles.")
+                                st.success(f"Confirmado! -{p['Pontos']} Goles.")
                                 st.markdown(f"""
                                     <div style='text-align: center; background-color: #ffffff; padding: 20px; border-radius: 15px; border: 5px solid #e68a00;'>
-                                        <p style='color: #0b0e27; font-weight: bold; margin-bottom: 10px;'>APRESENTE NO BALCÃO:</p>
-                                        <img src='{qr_url}' style='width: 180px; margin-bottom: 10px;'>
-                                        <h1 style='color: #0b0e27; margin: 0; font-size: 2.5em;'>{voucher}</h1>
-                                        <p style='color: #444; margin: 0;'>{p['nome']}</p>
+                                        <p style='color: #0b0e27; font-weight: bold;'>MOSTRE NO BALCÃO:</p>
+                                        <img src='{qr_url}' style='width: 180px;'>
+                                        <h1 style='color: #0b0e27; margin: 0;'>{voucher}</h1>
                                     </div>
                                 """, unsafe_allow_html=True)
                                 st.balloons()
-                                
-                                # Força a atualização do saldo exibido na próxima interação
                                 st.session_state.dados_usuario['Saldo_Atual'] = novo_saldo
-                                
                             except Exception as e:
-                                st.error(f"Erro na transação: {e}")
+                                st.error(f"Erro: {e}")
                 else:
-                    st.button("Saldo Insuficiente", key=f"btn_disabled_{i}", disabled=True)
+                    st.button("Saldo Insuficiente", key=f"btn_off_{i}", disabled=True)
                     
 # ==========================================
 # ABA 4: AREA DO MESTRE#
