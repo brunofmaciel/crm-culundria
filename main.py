@@ -151,32 +151,69 @@ elif aba == "Fazer Parte da Confraria":
                     st.success("Cadastrado! Faça login.")
                 except Exception as e: st.error(f"Erro: {e}")
 
-# ==========================================
-# ABA 4: ÁREA DO MESTRE
-# ==========================================
-# ==========================================
-# ABA 4: ÁREA DO MESTRE (VERSÃO ANTI-ERRO)
-# ==========================================
 elif aba == "Área do Mestre":
     st.title("🏰 Área do Mestre")
-    pwd = st.text_input("Senha:", type="password", key="m_pwd")
-    if pwd == st.secrets["admin_password"]:
+    
+    # Campo de senha com chave única
+    senha_adm = st.text_input("Chave do Grimório:", type="password", key="mestre_final_pwd")
+    
+    if senha_adm == st.secrets["admin_password"]:
+        st.success("Acesso autorizado, Mestre!")
+        
         try:
-            # Lendo a aba VENDAS com proteção contra vazios
+            # --- LEITURA BLINDADA DA ABA VENDAS ---
             sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
             data_v = sh_v.get_all_values()
+            # Criamos o DataFrame e removemos colunas sem nome (vazias)
             df_v = pd.DataFrame(data_v[1:], columns=data_v[0])
-            df_v = df_v.loc[:, df_v.columns != ''] # Mata colunas fantasmas
+            df_v = df_v.loc[:, df_v.columns != ''] 
             
-            # Converte litragem para número
+            # --- LEITURA BLINDADA DA ABA CLIENTES ---
+            sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+            data_c = sh_c.get_all_values()
+            df_c = pd.DataFrame(data_c[1:], columns=data_c[0])
+            df_c = df_c.loc[:, df_c.columns != '']
+
+            # --- CONVERSÃO DE DADOS (Transforma texto em número) ---
             df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
+            df_c['Pontos_Totais'] = pd.to_numeric(df_c['Pontos_Totais'], errors='coerce').fillna(0)
+            df_c['Saldo_Atual'] = pd.to_numeric(df_c['Saldo_Atual'], errors='coerce').fillna(0)
+
+            # --- 1. MÉTRICAS DE TOPO ---
+            st.subheader("📊 Resumo da Brassagem")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
+            c2.metric("Confrades", len(df_c))
+            c3.metric("Pontos p/ Troca", f"{int(df_c['Saldo_Atual'].sum())} PTS")
+
+            st.write("---")
+
+            # --- 2. GRÁFICOS E RANKING ---
+            col_chart, col_rank = st.columns([2, 1])
             
-            st.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
-            
-            if 'Estilo Chopp' in df_v.columns:
+            with col_chart:
                 st.subheader("🍺 Estilos mais pedidos")
-                vendas_estilo = df_v.groupby('Estilo Chopp')['Litragem_Total'].sum()
-                st.bar_chart(vendas_estilo)
-                
-        except Exception as e: 
-            st.error(f"Erro ao processar a planilha: {e}")
+                if 'Estilo Chopp' in df_v.columns:
+                    vendas_estilo = df_v.groupby('Estilo Chopp')['Litragem_Total'].sum()
+                    st.bar_chart(vendas_estilo)
+                else:
+                    st.warning("Coluna 'Estilo Chopp' não encontrada.")
+
+            with col_rank:
+                st.subheader("🏆 Top Confrades")
+                top_5 = df_c.nlargest(5, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
+                st.table(top_5)
+
+            # --- 3. GESTÃO DE RESGATES (Aba INDICAÇÕES) ---
+            st.write("---")
+            st.subheader("🚀 Pedidos e Indicações")
+            sh_i = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
+            data_i = sh_i.get_all_values()
+            df_i = pd.DataFrame(data_i[1:], columns=data_i[0])
+            st.dataframe(df_i)
+
+        except Exception as e:
+            st.error(f"Erro ao processar o grimório: {e}")
+            
+    elif senha_adm != "":
+        st.error("Chave incorreta.")
