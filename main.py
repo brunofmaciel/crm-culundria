@@ -90,6 +90,9 @@ if aba == "Meu Painel": # <--- Nome batendo exatamente com a lista opcoes_menu
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     dados = sh_c.get_all_records()
                     df_c = pd.DataFrame(dados)
+
+        except Exception as e: # <--- ADICIONE ESTAS DUAS LINHAS AQUI
+                    st.error(f"Erro ao acessar banco de dados: {e}")
                     
         # --- RECUPERAÇÃO DE SENHA (FORA DO FORMULÁRIO) ---
         st.write("---")
