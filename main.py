@@ -403,33 +403,44 @@ elif aba == "Fazer Parte da Confraria":
 # ==========================================
 # ABA 4: AREA DO MESTRE#
 # ==========================================
-def exibir_area_mestre():
-    st.title("🧙‍♂️ Grimório da Culundria")
+elif aba == "Área do Mestre Cervejeiro":
+    st.title("🧙‍♂️ Área do Mestre")
     
-    # Inicializa o estado se não existir
+    # 1. Inicializa o estado de autenticação
     if "mestre_autenticado" not in st.session_state:
         st.session_state.mestre_autenticado = False
 
-    # TELA DE LOGIN
+    # 2. Lógica de Login
     if not st.session_state.mestre_autenticado:
-        st.info("Acesso restrito aos Mestres Cervejeiros.")
+        st.info("Acesso restrito aos Mestres Cervejeiros da Culundria.")
+        
         with st.form("form_login_mestre"):
             senha = st.text_input("Chave do Grimório", type="password")
             btn = st.form_submit_button("Abrir Relatórios")
             
             if btn:
                 if senha:
+                    # Tenta validar na aba CONFIG
                     com_sucesso, nome = verificar_acesso_mestre(senha)
                     if com_sucesso:
                         st.session_state.mestre_autenticado = True
                         st.session_state.nome_mestre = nome
+                        st.success(f"Acesso concedido: {nome}")
                         st.rerun()
                     else:
                         st.error("Chave incorreta ou mestre não cadastrado.")
                 else:
                     st.warning("Por favor, insira a chave.")
-        return # Trava aqui até logar
+    
+    # 3. Conteúdo Protegido (Só aparece se logado)
+    else:
+        st.success(f"Bem-vindo, Mestre {st.session_state.nome_mestre}")
+        if st.button("Sair da Área Administrativa"):
+            st.session_state.mestre_autenticado = False
+            st.rerun()
 
+        # Aqui entram suas abas (tab_balcao, tab_relatorios, tab_ranking)
+        # Copie o código das abas que você já tem e cole aqui dentro deste 'else'
     # --- 3. ÁREA AUTORIZADA (Só chega aqui se autenticado) ---
     st.success(f"Logado como: Mestre {st.session_state.nome_mestre}")
     
