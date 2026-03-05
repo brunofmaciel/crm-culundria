@@ -475,6 +475,48 @@ elif aba == "Fazer Parte da Confraria":
                     st.error(f"Erro ao acessar o banco de dados: {e}")
             else:
                 st.warning("⚠️ Por favor, preencha Nome, CPF (11 dígitos) e Senha.")
+
+def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
+    try:
+        sh = client.open(NOME_PLANILHA)
+        aba_ind = sh.worksheet("INDICAÇÕES")
+        aba_cli = sh.worksheet("CLIENTES")
+        
+        # Lê todas as indicações
+        dados_ind = aba_ind.get_all_records()
+        if not dados_ind: return
+        
+        df_ind = pd.DataFrame(dados_ind)
+
+        # Procura se o cliente que está comprando foi indicado (por Nome ou Whats)
+        # E se a venda ainda não foi marcada como concluída
+        filtro = (df_ind['Venda_Concluída'] == "NÃO") & \
+                 ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente)) | 
+                  (df_ind['Nome_Amigo'] == nome_cliente.upper()))
+        
+        idx = df_ind[filtro].index
+
+        if not idx.empty:
+            linha_na_planilha = idx[0] + 2 # +2 compensa cabeçalho e índice 0
+            id_padrinho = str(df_ind.iloc[idx[0]]['ID_Padrinho']).strip()
+
+            # 1. Marca como "SIM" na aba INDICAÇÕES
+            aba_ind.update_cell(linha_na_planilha, 4, "SIM") # Coluna D
+
+            # 2. Localiza o Padrinho na aba CLIENTES para dar o prémio
+            celula_padrinho = aba_cli.find(id_padrinho)
+            if celula_padrinho:
+                # Busca valores atuais (Saldo na Coluna 11, Totais na Coluna 6)
+                saldo_p = float(aba_cli.cell(celula_padrinho.row, 11).value or 0)
+                total_p = float(aba_cli.cell(celula_padrinho.row, 6).value or 0)
+                
+                # Update dos valores (+50 goles)
+                aba_cli.update_cell(celula_padrinho.row, 11, saldo_p + 50)
+                aba_cli.update_cell(celula_padrinho.row, 6, total_p + 50)
+                
+                st.toast(f"🎁 Bónus de Indicação creditado ao Padrinho {id_padrinho}!")
+    except Exception as e:
+        print(f"Erro no processamento de bónus: {e}")
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
