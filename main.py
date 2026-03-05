@@ -206,16 +206,16 @@ if aba == "Meu Painel":
                 colunas_desejadas = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']
                 colunas_existentes = [c for c in colunas_desejadas if c in meu_hist.columns]
                 if colunas_existentes:
-                exibir = meu_hist[colunas_existentes].copy()
+                    exibir = meu_hist[colunas_existentes].copy()
                 
-                # Opcional: Renomear para ficar bonito no app
-                exibir.columns = [c.replace('_', ' ') for c in exibir.columns]
+                    # Opcional: Renomear para ficar bonito no app
+                    exibir.columns = [c.replace('_', ' ') for c in exibir.columns]
         
-                st.dataframe(exibir, use_container_width=True)
+                    st.dataframe(exibir, use_container_width=True)
+                else:
+                    st.warning("As colunas de histórico não foram encontradas na planilha.")
             else:
-                st.warning("As colunas de histórico não foram encontradas na planilha.")
-        else:
-            st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
+                st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
             
             # --- 5. BOTÃO DE SAIR ---
             if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
