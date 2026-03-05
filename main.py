@@ -188,9 +188,18 @@ if aba == "Meu Painel":
                 pass
 
             # --- 2. MÉTRICAS ---
-            saldo = u.get('Saldo_Atual', 0)
-            status = calcular_status_confraria(saldo)
-        
+            
+            # Pega os dois valores separadamente
+            saldo_disponivel = u.get('Saldo_Atual', 0)    # O que ele pode gastar
+            pontos_vida_toda = u.get('Pontos_Totais', 0)  # O que define o Nível
+
+            #Calcula o status pelo saldo global
+            status = calcular_status_confraria(pontos_vida_toda)
+
+            #Na hora de exibir a barra de progresso, use o histórico:
+            progresso = min(float(pontos_vida_toda) / status['proximo_pts'], 1.0)
+            st.progress(progresso)
+
             c1, c2, c3 = st.columns([1, 1, 1])
             with c1:
                 st.markdown(f"""
