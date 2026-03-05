@@ -174,7 +174,7 @@ if aba == "Meu Painel":
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #00d4ff;">
                         <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">STATUS</p>
-                        <h2 style="margin:0; font-size: 1.5.0rem; color: #ffffff;">{status['nivel']}</h2>
+                        <h2 style="margin:0; font-size: 2.0rem; color: #ffffff;">{status['nivel']}</h2>
                     </div>
                 """, unsafe_allow_html=True)
             
@@ -222,6 +222,19 @@ if aba == "Meu Painel":
                     st.warning("As colunas de histórico não foram encontradas na planilha.")
             else:
                 st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
+# --- SISTEMA DE INDICAÇÃO NO PAINEL ---
+st.write("---")
+st.subheader("📢 Convide um Amigo")
+url_base = "https://golesdevantagemculundria.streamlit.app" 
+link_indicacao = f"{url_base}/?ref={u['ID_Cliente']}"
+
+st.info(f"Compartilhe seu link! Se um amigo se cadastrar, você ganha **50 Goles** de bônus!")
+st.code(link_indicacao, language="text")
+
+# Botão rápido para copiar (simulado via link de WhatsApp)
+texto_wa = urllib.parse.quote(f"Bora tomar uma na Culundria? Se cadastra pelo meu link e ganhe bônus: {link_indicacao}")
+link_wa = f"https://wa.me/?text={texto_wa}"
+st.markdown(f'<a href="{link_wa}" target="_blank"><button style="width:100%; border-radius:5px; background-color:#25d366; color:white; font-weight:bold; border:none; padding:10px;">COMPARTILHAR NO WHATSAPP</button></a>', unsafe_allow_html=True)
             
             # --- 5. BOTÃO DE SAIR ---
             if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
