@@ -386,11 +386,14 @@ elif aba == "Fazer Parte da Confraria":
 # ABA 4: AREA DO MESTRE#
 # ==========================================
 elif aba == "Área do Mestre Cervejeiro":
-    st.title("🧙‍♂️ Área do Mestre")
+    st.title("🧙‍♂️ Grimório da Culundria")
     
-    # 1. Inicializa o estado de autenticação
+    # 1. Senha Fixa (Troque pela sua!)
+    SENHA_FIXA = "SUA_SENHA_AQUI"
+
     if "mestre_autenticado" not in st.session_state:
         st.session_state.mestre_autenticado = False
+    
 
     # 2. Lógica de Login
     if not st.session_state.mestre_autenticado:
