@@ -61,6 +61,9 @@ except Exception as e:
     st.error(f"Erro na conexão: {e}")
     st.stop()
 
+# Inicializa o cliente (Isso é o que a função de mestre precisa!)
+client = conectar_google_sheets()
+
 NOME_PLANILHA = "crm-culundria" 
 
 # --- FUNÇÃO DE NÍVEIS ---
