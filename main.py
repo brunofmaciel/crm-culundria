@@ -50,22 +50,24 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# ==========================================
 # 2. CONEXÃO COM GOOGLE SHEETS
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-try:
-    info = dict(st.secrets["gcp_service_account"])
-    info["private_key"] = info["private_key"].replace("\\n", "\n")
-    creds = Credentials.from_service_account_info(info, scopes=scope)
-    client = gspread.authorize(creds)
-except Exception as e:
-    st.error(f"Erro na conexão: {e}")
-    st.stop()
+# ==========================================
+def conectar_google_sheets():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    try:
+        # Puxa os dados do painel "Secrets" do Streamlit
+        info = dict(st.secrets["gcp_service_account"])
+        info["private_key"] = info["private_key"].replace("\\n", "\n")
+        creds = Credentials.from_service_account_info(info, scopes=scope)
+        return gspread.authorize(creds)
+    except Exception as e:
+        st.error(f"Erro na conexão com o Google: {e}")
+        st.stop()
 
-# Inicializa o cliente (Isso é o que a função de mestre precisa!)
+# Agora sim, inicializamos o cliente usando a função acima
 client = conectar_google_sheets()
-
-NOME_PLANILHA = "crm-culundria" 
-
+NOME_PLANILHA = "crm-culundria"
 # --- FUNÇÃO DE NÍVEIS ---
 def calcular_status_confraria(pontos):
     try: p = float(pontos)
