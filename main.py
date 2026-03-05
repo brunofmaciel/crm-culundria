@@ -95,10 +95,21 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
+# ==========================================
+# ABA 1: MEU PAINEL (LOGIN E STATUS)
+# ==========================================
 if aba == "Meu Painel":
+    # --- CAPTURA DE INDICAÇÃO (Rastreamento) ---
+    query_params = st.query_params
+    quem_indicou = query_params.get("ref", None)
+
     if not st.session_state.get('logado', False):
         st.title("🍺 Acesso à Confraria")
         
+        # Alerta se ele veio por indicação
+        if quem_indicou:
+            st.toast(f"🔗 Link de indicação detectado! Finalize seu cadastro para ativar o bônus.")
+
         with st.form("login_form"):
             cpf_login = st.text_input("Digite seu CPF (apenas números)")
             senha_login = st.text_input("Sua Senha", type="password")
@@ -109,7 +120,6 @@ if aba == "Meu Painel":
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
                     df_c = pd.DataFrame(sh_c.get_all_records())
                     
-                    # Filtro garantindo que tudo seja Texto
                     user = df_c[(df_c['ID_Cliente'].astype(str) == str(cpf_login)) & 
                                 (df_c['Senha'].astype(str) == str(senha_login))]
                     
@@ -137,15 +147,12 @@ if aba == "Meu Painel":
             try:
                 sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
                 df_v = pd.DataFrame(sh_v.get_all_records())
-                
-                # Filtra pelo CPF e limpa espaços
                 df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.strip()
                 meu_hist = df_v[df_v['ID_Cliente'] == str(u['ID_Cliente']).strip()].copy()
                 
                 if not meu_hist.empty:
-                    # Converte a coluna Data_Venda para data real
                     meu_hist['Data_Venda'] = pd.to_datetime(meu_hist['Data_Venda'], dayfirst=True, errors='coerce')
-                    meu_hist = meu_hist.dropna(subset=['Data_Venda']) # Remove erros de data
+                    meu_hist = meu_hist.dropna(subset=['Data_Venda'])
                     
                     if not meu_hist.empty:
                         ultima_compra = meu_hist['Data_Venda'].max()
@@ -153,77 +160,60 @@ if aba == "Meu Painel":
             except:
                 pass
 
-            
-            # --- 2. MÉTRICAS COM FONTES REDUZIDAS ---
+            # --- 2. MÉTRICAS ---
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
         
-            # Criamos as colunas
             c1, c2, c3 = st.columns(3)
-        
-            # Usamos HTML/CSS dentro de cada coluna para controlar o tamanho exato da fonte
             with c1:
-                st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #e68a00;">
-                        <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">SALDO</p>
-                        <h2 style="margin:0; font-size: 2.0rem; color: #e68a00;">{int(saldo)} Goles</h2>
-                    </div>
-                """, unsafe_allow_html=True)
-            
+                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
-                st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #00d4ff;">
-                        <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">STATUS</p>
-                        <h2 style="margin:0; font-size: 2.0rem; color: #ffffff;">{status['nivel']}</h2>
-                    </div>
-                """, unsafe_allow_html=True)
-            
+                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
             with c3:
-                st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 10px; border-radius: 5px; border-bottom: 3px solid #ff4b4b;">
-                        <p style="margin:0; font-size: 0.75rem; color: #aaa; font-weight: bold;">INATIVIDADE</p>
-                        <h2 style="margin:0; font-size: 2.0rem; color: #ffffff;">{dias_inatividade} dias</h2>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
 
-            st.write("") # Espaçamento sutil
-
-        
-            # --- 3. BARRA DE PROGRESSO E ALERTA DE EXPIRAÇÃO ---
+            st.write("") 
             st.write(f"**Status:** {status['desc']}")
             limite = status['proximo_pts'] if status['proximo_pts'] > 0 else 1
             progresso = min(float(saldo) / limite, 1.0)
             st.progress(progresso)
-            
-            # Lógica de Expiração (365 dias)
-            dias_restantes = 365 - dias_inatividade
-            if dias_restantes <= 60:
-                st.warning(f"⚠️ Atenção! Seus pontos expiram em {dias_restantes} dias. Peça um novo barril!")
-            else:
-                st.info(f"💡 {status['msg']} (Seus pontos expiram em {dias_restantes} dias! Faça um novo pedido e renove seu saldo)")
 
-            # --- 4. HISTÓRICO DE BARRIS (TABELA) ---
+            # --- 3. BLOCO DE INDICAÇÃO (NOVIDADE) ---
+            st.write("---")
+            st.subheader("📢 Convide um Amigo")
+            
+            # Gerador de Link
+            url_app = "https://golesdevantagemculundria.streamlit.app" # Verifique se a URL está correta
+            link_ref = f"{url_app}/?ref={u['ID_Cliente']}"
+            
+            st.info("Ganhe **50 Goles** extras por cada amigo que se cadastrar pelo seu link!")
+            st.code(link_ref, language="text")
+            
+            # Botão de WhatsApp
+            msg_wa = urllib.parse.quote(f"Bora tomar uma na Culundria? Se cadastra pelo meu link e a gente ganha bônus: {link_ref}")
+            st.markdown(f"""
+                <a href="https://wa.me/?text={msg_wa}" target="_blank">
+                    <button style="width:100%; border-radius:5px; background-color:#25d366; color:white; font-weight:bold; border:none; padding:10px; cursor:pointer;">
+                        📲 COMPARTILHAR NO WHATSAPP
+                    </button>
+                </a>
+            """, unsafe_allow_html=True)
+
+            # --- 4. HISTÓRICO DE BARRIS ---
             st.write("---")
             st.subheader("🛢️ Histórico de Consumo")
             
             if not meu_hist.empty:
-                # Formata para exibição
                 meu_hist.columns = [str(c).strip() for c in meu_hist.columns]
-                colunas_desejadas = ['Data_Venda', 'Estilo_Chopp', 'Goles Acumulados', 'Total_Pontos']
-                colunas_existentes = [c for c in colunas_desejadas if c in meu_hist.columns]
-                if colunas_existentes:
-                    exibir = meu_hist[colunas_existentes].copy()
-                
-                    # Opcional: Renomear para ficar bonito no app
+                col_des = ['Data_Venda', 'Estilo_Chopp', 'Goles Acumulados', 'Total_Pontos']
+                col_exis = [c for c in col_des if c in meu_hist.columns]
+                if col_exis:
+                    exibir = meu_hist[col_exis].copy()
                     exibir.columns = [c.replace('_', ' ') for c in exibir.columns]
-        
                     st.dataframe(exibir, use_container_width=True)
-                else:
-                    st.warning("As colunas de histórico não foram encontradas na planilha.")
             else:
                 st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
-                        
-            # --- 5. BOTÃO DE SAIR ---
+                                
             if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
                 st.session_state.logado = False
                 st.session_state.dados_usuario = None
