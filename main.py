@@ -17,24 +17,6 @@ voucher_detectado = query_params.get("voucher", None)
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
-def verificar_acesso_mestre(senha_digitada):
-    try:
-        sh = client.open(NOME_PLANILHA)
-        # Tenta abrir a aba CONFIG ou ADMINS (ajuste o nome se for diferente)
-        try:
-            aba_config = sh.worksheet("CONFIG")
-        except:
-            aba_config = sh.worksheet("ADMINS")
-            
-        admins = aba_config.get_all_records()
-        for admin in admins:
-            # Compara a senha (coluna deve se chamar Chave_Mestre)
-            if str(admin.get('Chave_Mestre', '')).strip() == str(senha_digitada).strip():
-                return True, admin.get('Nome', 'Mestre')
-        return False, None
-    except Exception as e:
-        st.error(f"Erro técnico na aba CONFIG: {e}")
-        return False, None
         
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
 st.markdown("""
