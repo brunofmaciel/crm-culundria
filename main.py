@@ -162,7 +162,6 @@ if aba == "Meu Painel":
                         st.error("CPF ou Senha não encontrados.")
                 except Exception as e:
                     st.error(f"Erro de conexão com a planilha: {e}")
-    
     else:
         u = st.session_state.get('dados_usuario')
         
@@ -170,23 +169,23 @@ if aba == "Meu Painel":
             st.title(f"🍻 Painel do Confrade")
             st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
 
-        # --- BOTÃO DE ATUALIZAÇÃO (DENTRO DO PAINEL DO CONFRADE) ---
-             if st.button("🔄 ATUALIZAR MEUS GOLES", use_container_width=True):
-                    with st.spinner("Sincronizando com o barril..."):
-                    # Re-conecta e busca a linha do usuário novamente
-                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    df_c = pd.DataFrame(sh_c.get_all_records())
-        
-                    # Localiza o usuário logado pelo ID (CPF)
-                    cpf_logado = st.session_state.dados_usuario['ID_Cliente']
-                    user_atualizado = df_c[df_c['ID_Cliente'].astype(str) == str(cpf_logado)]
-            
-                     if not user_atualizado.empty:
-                        # Atualiza a sessão com os dados novos da planilha
-                        st.session_state.dados_usuario = user_atualizado.iloc[0].to_dict()
-                        st.toast("Goles atualizados com sucesso! 🍻")
-                        st.rerun()    
-            
+            # --- BOTÃO DE ATUALIZAÇÃO (Exatamente 4 espaços à frente do 'if u') ---
+            if st.button("🔄 ATUALIZAR MEUS GOLES", use_container_width=True):
+                with st.spinner("Sincronizando com o barril..."):
+                    try:
+                        sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                        df_c = pd.DataFrame(sh_c.get_all_records())
+                        
+                        cpf_logado = st.session_state.dados_usuario['ID_Cliente']
+                        user_atualizado = df_c[df_c['ID_Cliente'].astype(str).str.strip() == str(cpf_logado).strip()]
+                        
+                        if not user_atualizado.empty:
+                            st.session_state.dados_usuario = user_atualizado.iloc[0].to_dict()
+                            st.toast("Goles atualizados! 🍻")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro na sincronização: {e}")
+                        
             # --- 1. PROCESSAMENTO DE DADOS (INATIVIDADE) ---
             dias_inatividade = 0
             meu_hist = pd.DataFrame()
