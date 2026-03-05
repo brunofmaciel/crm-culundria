@@ -164,7 +164,7 @@ if aba == "Meu Painel":
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
         
-            c1, c2, c3 = st.columns([2, 1, 2])
+            c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
