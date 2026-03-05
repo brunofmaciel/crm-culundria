@@ -395,9 +395,11 @@ elif aba == "Fazer Parte da Confraria":
 def exibir_area_mestre():
     st.title("🧙‍♂️ Grimório da Culundria")
     
-    # Se ainda não estiver autenticado, pede a senha
+    # 1. Gerenciamento de Autenticação na Sessão
     if "mestre_autenticado" not in st.session_state:
         st.session_state.mestre_autenticado = False
+
+    # 2. Tela de Login (Se não estiver autenticado)
     if not st.session_state.mestre_autenticado:
         with st.form("login_mestre"):
             senha = st.text_input("Insira a Chave do Mestre", type="password")
@@ -408,94 +410,95 @@ def exibir_area_mestre():
                 if autorizado:
                     st.session_state.mestre_autenticado = True
                     st.session_state.nome_mestre = nome_mestre
-                    st.rerun() # Recarrega para mostrar o conteúdo
+                    st.rerun() 
                 else:
                     st.error("Chave inválida. Acesso negado.")
-        return # Para a execução aqui até que ele logue
+        return # Interrompe aqui para não mostrar as abas sem senha
 
-    # --- DAQUI PARA BAIXO SEGUE O SEU CÓDIGO ORIGINAL DA ÁREA DE MESTRE ---
+    # --- 3. ÁREA AUTORIZADA (Só chega aqui se autenticado) ---
     st.success(f"Logado como: Mestre {st.session_state.nome_mestre}")
     
     if st.button("Sair da Área Administrativa"):
         st.session_state.mestre_autenticado = False
         st.rerun()
 
+    # Criação das Abas
+    tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
     
+    try:
+        # Carregamento de Dados
+        sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
+        df_v = pd.DataFrame(sh_v.get_all_records())
         
-        # 2. Criação das Abas ANTES de usá-las
-        tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
+        sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+        df_c = pd.DataFrame(sh_c.get_all_records())
         
-        try:
-            # 3. Carregamento de Dados (Geral para todas as abas)
-            sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-            df_v = pd.DataFrame(sh_v.get_all_records())
-            
-            sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-            df_c = pd.DataFrame(sh_c.get_all_records())
-            
-            # Limpeza e Conversão
-            df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
+        # Limpeza e Conversão de Segurança
+        df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
+        
+        # Ajuste de nomes de colunas (caso haja Pontos_Totais ou Saldo_Atual)
+        if 'Pontos_Totais' in df_c.columns:
             df_c['Pontos_Totais'] = pd.to_numeric(df_c['Pontos_Totais'], errors='coerce').fillna(0)
+        if 'Saldo_Atual' in df_c.columns:
             df_c['Saldo_Atual'] = pd.to_numeric(df_c['Saldo_Atual'], errors='coerce').fillna(0)
 
-            # --- ABA 1: VALIDAÇÃO DE VOUCHER (Otimizada para QR Code) ---
-            with tab_balcao:
-                st.subheader("🏁 Validação de Resgate")
-                
-                # Captura automática do link do QR Code
-                params = st.query_params
-                voucher_url = params.get("voucher", "")
-                
-                cod_v = st.text_input(
-                    "Código do Voucher:", 
-                    value=voucher_url, 
-                    placeholder="Ex: V-A1B2",
-                    key="input_voucher_mestre"
-                ).upper().strip()
-                
-                if st.button("VERIFICAR E DAR BAIXA", key="btn_baixa_voucher"):
-                    if cod_v:
-                        sh_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
-                        data_r = sh_r.get_all_values()
-                        df_r = pd.DataFrame(data_r[1:], columns=data_r[0])
-                        
-                        v_linha = df_r[df_r['Cód_Voucher'] == cod_v]
-                        
-                        if not v_linha.empty:
-                            idx = v_linha.index[0] + 2
-                            if v_linha.iloc[0]['Status'] == "Pendente":
-                                sh_r.update_cell(idx, 6, "Entregue")
-                                st.success(f"✅ VOUCHER VÁLIDO! Entregar: **{v_linha.iloc[0]['Produto']}**")
-                                st.balloons()
-                                st.query_params.clear() # Limpa a URL após sucesso
-                            else:
-                                st.error("❌ Este voucher já foi utilizado anteriormente!")
+        # --- ABA 1: VALIDAÇÃO DE VOUCHER ---
+        with tab_balcao:
+            st.subheader("🏁 Validação de Resgate")
+            params = st.query_params
+            voucher_url = params.get("voucher", "")
+            
+            cod_v = st.text_input(
+                "Código do Voucher:", 
+                value=voucher_url, 
+                placeholder="Ex: V-A1B2",
+                key="input_voucher_mestre"
+            ).upper().strip()
+            
+            if st.button("VERIFICAR E DAR BAIXA", key="btn_baixa_voucher"):
+                if cod_v:
+                    sh_r = client.open(NOME_PLANILHA).worksheet("RESGATES")
+                    data_r = sh_r.get_all_values()
+                    df_r = pd.DataFrame(data_r[1:], columns=data_r[0])
+                    
+                    v_linha = df_r[df_r['Cód_Voucher'] == cod_v]
+                    
+                    if not v_linha.empty:
+                        idx = v_linha.index[0] + 2
+                        if v_linha.iloc[0]['Status'] == "Pendente":
+                            sh_r.update_cell(idx, 6, "Entregue")
+                            st.success(f"✅ VOUCHER VÁLIDO! Entregar: **{v_linha.iloc[0]['Produto']}**")
+                            st.balloons()
+                            st.query_params.clear()
                         else:
-                            st.error("❓ Código não encontrado ou inválido.")
+                            st.error("❌ Este voucher já foi utilizado anteriormente!")
                     else:
-                        st.warning("Insira um código de voucher.")
+                        st.error("❓ Código não encontrado ou inválido.")
 
-            # --- ABA 2: RELATÓRIOS ---
-            with tab_relatorios:
-                st.subheader("📊 Resumo da Brassagem")
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
-                c2.metric("Confrades", len(df_c))
+        # --- ABA 2: RELATÓRIOS ---
+        with tab_relatorios:
+            st.subheader("📊 Resumo da Brassagem")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
+            c2.metric("Confrades", len(df_c))
+            if 'Saldo_Atual' in df_c.columns:
                 c3.metric("Pontos p/ Troca", int(df_c['Saldo_Atual'].sum()))
-                
-                if 'Estilo Chopp' in df_v.columns:
-                    st.write("---")
-                    st.subheader("🍺 Estilos mais pedidos")
-                    st.bar_chart(df_v.groupby('Estilo Chopp')['Litragem_Total'].sum())
+            
+            # Gráfico de Estilos
+            col_estilo = 'Estilo Chopp' if 'Estilo Chopp' in df_v.columns else 'Estilo_Chopp'
+            if col_estilo in df_v.columns:
+                st.write("---")
+                st.subheader("🍺 Estilos mais pedidos")
+                chart_data = df_v.groupby(col_estilo)['Litragem_Total'].sum()
+                st.bar_chart(chart_data)
 
-            # --- ABA 3: RANKING ---
-            with tab_ranking:
-                st.subheader("🏆 Top Confrades")
-                top_10 = df_c.nlargest(10, 'Pontos_Totais')[['Nome_Completo', 'Pontos_Totais']]
+        # --- ABA 3: RANKING ---
+        with tab_ranking:
+            st.subheader("🏆 Top Confrades")
+            col_pontos = 'Pontos_Totais' if 'Pontos_Totais' in df_c.columns else 'Saldo_Atual'
+            if col_pontos in df_c.columns:
+                top_10 = df_c.nlargest(10, col_pontos)[['Nome_Completo', col_pontos]]
                 st.table(top_10)
                 
-        except Exception as e:
-            st.error(f"Erro ao carregar o Grimório: {e}")
-            
-    elif senha_adm != "":
-        st.error("Chave incorreta, Confrade.")
+    except Exception as e:
+        st.error(f"Erro ao carregar os dados do Grimório: {e}")
