@@ -172,7 +172,7 @@ if aba == "Meu Painel":
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo)} GOLES</h2>
                     </div>
                 """, unsafe_allow_html=True)
-            with c3:
+            with c2:
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
                         <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO</p>
