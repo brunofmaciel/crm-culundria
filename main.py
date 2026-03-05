@@ -346,7 +346,10 @@ elif aba == "Loja de Souvenirs":
                 """, unsafe_allow_html=True)
                 
                 if p['URL_Imagem']:
-                    st.image(p['URL_Imagem'], use_container_width=True)
+                    try:
+                        st.image(p['URL_Imagem'], use_container_width=True)
+                    except:
+                        st.warning(f"Erro ao carregar imagem: {p['nome']}")                    
                 else:
                     st.info("Foto em breve!")
 
