@@ -63,11 +63,11 @@ def calcular_status_confraria(pontos_historicos):
             "desc": "Descobrindo novos horizontes.", 
             "cor": "#a8dadc", 
             "proximo_pts": 501, 
-            "msg": f"Faltam {int(501 - p)} goles para ser 'Nosso Chegado'."
+            "msg": f"Faltam {int(501 - p)} goles para ser 'Chegado'."
         }
     elif p <= 1000:
         return {
-            "nivel": "Nosso Chegado", 
+            "nivel": "Chegado", 
             "desc": "A casa já é sua!", 
             "cor": "#e68a00", 
             "proximo_pts": 1001, 
