@@ -172,6 +172,21 @@ if aba == "Meu Painel":
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo)} GOLES</h2>
                     </div>
                 """, unsafe_allow_html=True)
+                with c3:
+                st.markdown(f"""
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO</p>
+                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{status['nivel'].upper()}</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+                with c3:
+                st.markdown(f"""
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO</p>
+                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo)} GOLES</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+                
             with c1:
                 st.markdown(f'<div class="stMetric"><p style="font-size:1rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
