@@ -157,17 +157,35 @@ if aba == "Meu Painel":
             except:
                 pass
 
-            # --- 2. MÉTRICAS ---
-            saldo = u.get('Saldo_Atual', 0)
-            status = calcular_status_confraria(saldo)
-        
+            # --- 2. MÉTRICAS (PAINEL DO CONFRADE) ---
             c1, c2, c3 = st.columns(3)
+    
             with c1:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.75rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
+                  st.markdown(f"""
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO</p>
+                        <h2 style="margin:0; font-size: 2.2rem; color: #ffffff; font-weight: 700;">{int(saldo)} GOLES</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+
             with c2:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.75rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #00d4ff;">
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">STATUS</p>
+                        <h2 style="margin:0; font-size: 2.2rem; color: #ffffff; font-weight: 700;">{status['nivel'].upper()}</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+
             with c3:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.75rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
+                # Lógica de cor para inatividade (opcional: fica vermelho se for alto)
+                cor_inat = "#ff4b4b" if dias_inatividade > 60 else "#aaa"
+                st.markdown(f"""
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid {cor_inat};">
+                        <p style="margin:0;     font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">INATIVIDADE</p>
+                        <h2 style="margin:0; font-size: 2.2rem; color: #ffffff; font-weight: 700;">{dias_inatividade} DIAS</h2>
+                    </div>
+                """, unsafe_allow_html=True)
+            
 
             st.write("") 
             st.write(f"**Status:** {status['desc']}")
