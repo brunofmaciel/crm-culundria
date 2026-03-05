@@ -188,26 +188,24 @@ if aba == "Meu Painel":
                 pass
 
             # --- 2. MÉTRICAS ---
-            
-            # Pega os dois valores separadamente
-            saldo_disponivel = u.get('Saldo_Atual', 0)    # O que ele pode gastar
-            pontos_vida_toda = u.get('Pontos_Totais', 0)  # O que define o Nível
+            # --- 2. MÉTRICAS ---
+            # Buscamos os valores com segurança (caso a coluna não venha, o padrão é 0)
+            saldo_disponivel = u.get('Saldo_Atual', 0)    # O que ele pode GASTAR
+            pontos_vida_toda = u.get('Pontos_Totais', 0)  # O que define o STATUS
 
-            #Calcula o status pelo saldo global
+            # Agora usamos a função de status baseada no HISTÓRICO
             status = calcular_status_confraria(pontos_vida_toda)
 
-            #Na hora de exibir a barra de progresso, use o histórico:
-            progresso = min(float(pontos_vida_toda) / status['proximo_pts'], 1.0)
-            st.progress(progresso)
-
             c1, c2, c3 = st.columns([1, 1, 1])
+
             with c1:
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
-                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO</p>
-                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo)} GOLES</h2>
+                          <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO DISPONÍVEL</p>
+                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo_disponivel)} GOLES</h2>
                     </div>
                 """, unsafe_allow_html=True)
+
             with c2:
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
@@ -215,22 +213,27 @@ if aba == "Meu Painel":
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{status['nivel'].upper()}</h2>
                     </div>
                 """, unsafe_allow_html=True)
+
             with c3:
                 cor_inat = "#ff4b4b" if dias_inatividade > 60 else "#aaa"
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid {cor_inat};">
-                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SUA ÚLTIMA COMPRA FOi</p>
-                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">HÁ {dias_inatividade} DIAS</h2>
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">INATIVIDADE</p>
+                        <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{dias_inatividade} DIAS</h2>
                     </div>
                 """, unsafe_allow_html=True)
-                
+    
             st.write("") 
-            st.write(f"**Status:** {status['desc']}")
-            limite = status['proximo_pts'] if status['proximo_pts'] > 0 else 1
-            progresso = min(float(saldo) / limite, 1.0)
-            st.progress(progresso)
+            st.write(f"**Nível:** {status['nivel']} — *{status['desc']}*")
+            st.info(status['msg']) # Mostra quanto falta para o próximo nível
 
-            # --- 3. BLOCO DE INDICAÇÃO (NOVIDADE) ---
+# Ajuste da Barra de Progresso (Baseada nos Pontos Totais)
+            limite = status['proximo_pts']
+            progresso = min(float(pontos_vida_toda) / limite, 1.0) if limite > 0 else 0
+            st.progress(progresso)
+            
+
+# --- 3. BLOCO DE INDICAÇÃO (NOVIDADE) ---
             st.write("---")
             st.subheader("📢 Convide um Amigo")
             
