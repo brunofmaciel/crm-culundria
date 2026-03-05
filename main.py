@@ -396,85 +396,7 @@ elif aba == "Loja de Souvenirs":
 # ==========================================
 # ==========================================
 # ABA 3: CADASTRO (FAZER PARTE DA CONFRARIA)
-# ==========================================
-elif aba == "Fazer Parte da Confraria":
-    st.title("🧪 Entre para a Confraria")
-    st.write("Preencha seus dados para começar a acumular goles!")
-
-    # 1. Captura quem indicou via URL
-    query_params = st.query_params
-    padrinho_id = query_params.get("ref", None)
-
-    if padrinho_id:
-        st.info(f"✨ Vimos que você foi indicado! Complete o cadastro para entrar na lista de bônus.")
-
-    # Usamos um formulário para organizar os campos
-    with st.form("form_cadastro_culundria", clear_on_submit=True):
-        nome = st.text_input("Nome Completo")
-        cpf_cad = st.text_input("CPF (apenas 11 números)")
-        whats = st.text_input("WhatsApp (com DDD)")
-        email = st.text_input("E-mail")
-        senha_cad = st.text_input("Crie uma Senha", type="password")
-        
-        enviar = st.form_submit_button("CRIAR MINHA CONTA")
-        
-        if enviar:
-            # Limpeza do CPF
-            cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
-            
-            if nome and len(cpf_limpo) == 11 and senha_cad:
-                try:
-                    # Conexão com a aba CLIENTES
-                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    cpfs_existentes = sh_c.col_values(1) # Coluna A
-                    
-                    if cpf_limpo in cpfs_existentes:
-                        st.error("🚫 Este CPF já é de um Confrade! Tente fazer Login.")
-                    else:
-                        # 2. MONTA A LINHA DO NOVO CLIENTE
-                        data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
-                        nova_linha = [
-                            cpf_limpo, 
-                            nome.strip().upper(), 
-                            whats.strip(), 
-                            email.strip().lower(), 
-                            "Explorador", 
-                            100, # Pontos Totais (Boas-vindas)
-                            0,   # Progresso
-                            data_hoje, 
-                            str(senha_cad).strip(),
-                            0,   # Gastos
-                            100  # Saldo Atual
-                        ]
-                        
-                        # Adiciona o novo cliente
-                        sh_c.append_row(nova_linha)
-
-                        # 3. REGISTRO NA ABA INDICAÇÕES (Se houver padrinho)
-                        if padrinho_id:
-                            try:
-                                sh_ind = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
-                                # Colunas: Nome_Amigo, Telefone_Amigo, Data_Indicação, Venda_Concluída, Pontos_Gerados, ID_Padrinho
-                                nova_indicao = [
-                                    nome.strip().upper(),
-                                    whats.strip(),
-                                    data_hoje,
-                                    "NÃO",
-                                    50,
-                                    str(padrinho_id)
-                                ]
-                                sh_ind.append_row(nova_indicao)
-                            except Exception as e_ind:
-                                # Erro silencioso para o usuário não travar o cadastro dele
-                                print(f"Erro ao registrar indicação: {e_ind}")
-
-                        st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada com 100 Goles de bônus.")
-                        st.balloons()
-                        
-                except Exception as e:
-                    st.error(f"Erro ao acessar o banco de dados: {e}")
-            else:
-                st.warning("⚠️ Por favor, preencha Nome, CPF (11 dígitos) e Senha.")
+# ==========================================# --- FUNÇÕES DE APOIO (Coloque aqui, antes das abas) ---
 
 def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
     try:
@@ -482,41 +404,36 @@ def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
         aba_ind = sh.worksheet("INDICAÇÕES")
         aba_cli = sh.worksheet("CLIENTES")
         
-        # Lê todas as indicações
         dados_ind = aba_ind.get_all_records()
         if not dados_ind: return
         
         df_ind = pd.DataFrame(dados_ind)
 
-        # Procura se o cliente que está comprando foi indicado (por Nome ou Whats)
-        # E se a venda ainda não foi marcada como concluída
+        # Filtra: Venda pendente AND (Telefone igual OR Nome igual)
         filtro = (df_ind['Venda_Concluída'] == "NÃO") & \
-                 ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente)) | 
-                  (df_ind['Nome_Amigo'] == nome_cliente.upper()))
+                 ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente).strip()) | 
+                  (df_ind['Nome_Amigo'] == nome_cliente.upper().strip()))
         
         idx = df_ind[filtro].index
 
         if not idx.empty:
-            linha_na_planilha = idx[0] + 2 # +2 compensa cabeçalho e índice 0
+            linha_f = idx[0] + 2 
             id_padrinho = str(df_ind.iloc[idx[0]]['ID_Padrinho']).strip()
 
-            # 1. Marca como "SIM" na aba INDICAÇÕES
-            aba_ind.update_cell(linha_na_planilha, 4, "SIM") # Coluna D
+            # 1. Marca como "SIM" para não pagar duas vezes
+            aba_ind.update_cell(linha_f, 4, "SIM")
 
-            # 2. Localiza o Padrinho na aba CLIENTES para dar o prémio
-            celula_padrinho = aba_cli.find(id_padrinho)
-            if celula_padrinho:
-                # Busca valores atuais (Saldo na Coluna 11, Totais na Coluna 6)
-                saldo_p = float(aba_cli.cell(celula_padrinho.row, 11).value or 0)
-                total_p = float(aba_cli.cell(celula_padrinho.row, 6).value or 0)
+            # 2. Localiza Padrinho e dá os 50 Goles
+            cel_p = aba_cli.find(id_padrinho)
+            if cel_p:
+                val_saldo = float(aba_cli.cell(cel_p.row, 11).value or 0)
+                val_total = float(aba_cli.cell(cel_p.row, 6).value or 0)
                 
-                # Update dos valores (+50 goles)
-                aba_cli.update_cell(celula_padrinho.row, 11, saldo_p + 50)
-                aba_cli.update_cell(celula_padrinho.row, 6, total_p + 50)
-                
-                st.toast(f"🎁 Bónus de Indicação creditado ao Padrinho {id_padrinho}!")
-    except Exception as e:
-        print(f"Erro no processamento de bónus: {e}")
+                aba_cli.update_cell(cel_p.row, 11, val_saldo + 50) # Saldo Atual
+                aba_cli.update_cell(cel_p.row, 6, val_total + 50)  # Pontos Totais (Status)
+                st.toast(f"🎁 Bónus de Indicação enviado ao Padrinho!")
+    except:
+        pass
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
