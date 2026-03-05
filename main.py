@@ -122,12 +122,6 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
-# ==========================================
-# ABA 1: MEU PAINEL (LOGIN E STATUS)
-# ==========================================
-# ==========================================
-# ABA 1: MEU PAINEL (LOGIN E STATUS)
-# ==========================================
 if aba == "Meu Painel":
     # --- CAPTURA DE INDICAÇÃO (Rastreamento) ---
     query_params = st.query_params
@@ -400,12 +394,20 @@ elif aba == "Loja de Souvenirs":
 
             
 # ==========================================
+# ==========================================
 # ABA 3: CADASTRO (FAZER PARTE DA CONFRARIA)
 # ==========================================
 elif aba == "Fazer Parte da Confraria":
     st.title("🧪 Entre para a Confraria")
     st.write("Preencha seus dados para começar a acumular goles!")
-    
+
+    # 1. Captura quem indicou via URL
+    query_params = st.query_params
+    padrinho_id = query_params.get("ref", None)
+
+    if padrinho_id:
+        st.info(f"✨ Vimos que você foi indicado! Complete o cadastro para entrar na lista de bônus.")
+
     # Usamos um formulário para organizar os campos
     with st.form("form_cadastro_culundria", clear_on_submit=True):
         nome = st.text_input("Nome Completo")
@@ -417,39 +419,55 @@ elif aba == "Fazer Parte da Confraria":
         enviar = st.form_submit_button("CRIAR MINHA CONTA")
         
         if enviar:
-            # Limpeza do CPF (remove pontos e traços)
+            # Limpeza do CPF
             cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
             
             if nome and len(cpf_limpo) == 11 and senha_cad:
                 try:
+                    # Conexão com a aba CLIENTES
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    
-                    # --- TRAVA DE SEGURANÇA: VERIFICA SE CPF JÁ EXISTE ---
                     cpfs_existentes = sh_c.col_values(1) # Coluna A
                     
                     if cpf_limpo in cpfs_existentes:
                         st.error("🚫 Este CPF já é de um Confrade! Tente fazer Login.")
                     else:
-                        # Se não existe, monta a linha para a planilha (11 colunas conforme sua aba CLIENTES)
-                        # A(ID), B(Nome), C(Telefone), D(Email), E(Nível), F(Pts T), G(Progr), H(Data), I(Senha), J(Gastos), K(Saldo)
+                        # 2. MONTA A LINHA DO NOVO CLIENTE
+                        data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         nova_linha = [
                             cpf_limpo, 
                             nome.strip().upper(), 
                             whats.strip(), 
                             email.strip().lower(), 
                             "Explorador", 
-                            100, # Pontos de boas-vindas
-                            0,   # Progresso inicial
-                            pd.Timestamp.now().strftime("%d/%m/%Y"), 
+                            100, # Pontos Totais (Boas-vindas)
+                            0,   # Progresso
+                            data_hoje, 
                             str(senha_cad).strip(),
-                            0,   # Pontos Gastos inicial
-                            100  # Saldo Atual inicial
+                            0,   # Gastos
+                            100  # Saldo Atual
                         ]
                         
-                        # Localiza a próxima linha vazia real
-                        proxima_vazia = len(cpfs_existentes) + 1
-                        sh_c.update(f"A{proxima_vazia}:K{proxima_vazia}", [nova_linha])
-                        
+                        # Adiciona o novo cliente
+                        sh_c.append_row(nova_linha)
+
+                        # 3. REGISTRO NA ABA INDICAÇÕES (Se houver padrinho)
+                        if padrinho_id:
+                            try:
+                                sh_ind = client.open(NOME_PLANILHA).worksheet("INDICAÇÕES")
+                                # Colunas: Nome_Amigo, Telefone_Amigo, Data_Indicação, Venda_Concluída, Pontos_Gerados, ID_Padrinho
+                                nova_indicao = [
+                                    nome.strip().upper(),
+                                    whats.strip(),
+                                    data_hoje,
+                                    "NÃO",
+                                    50,
+                                    str(padrinho_id)
+                                ]
+                                sh_ind.append_row(nova_indicao)
+                            except Exception as e_ind:
+                                # Erro silencioso para o usuário não travar o cadastro dele
+                                print(f"Erro ao registrar indicação: {e_ind}")
+
                         st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada com 100 Goles de bônus.")
                         st.balloons()
                         
@@ -457,7 +475,6 @@ elif aba == "Fazer Parte da Confraria":
                     st.error(f"Erro ao acessar o banco de dados: {e}")
             else:
                 st.warning("⚠️ Por favor, preencha Nome, CPF (11 dígitos) e Senha.")
-
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
