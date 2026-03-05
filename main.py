@@ -24,7 +24,7 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
     [data-testid="stAppViewContainer"] { background-color: #0b0e27; color: #ffffff; font-family: 'Montserrat', sans-serif; }
     [data-testid="stSidebar"] { background-color: #050714; }
-    .stMetric { background-color: #161b3d; padding: 1.5rem; border-radius: 10px; border: 1px solid #e68a00; }
+    .stMetric { background-color: #161b3d; padding: 1.0rem; border-radius: 10px; border: 1px solid #e68a00; }
     h1, h2, h3, h4 { color: #ffffff !important; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .stButton>button { width: 100%; border-radius: 5px; background-color: #e68a00; color: white; font-weight: bold; border: none; padding: 0.6rem; }
     .stProgress > div > div > div > div { background-image: linear-gradient(to right, #e68a00, #ffcc33); }
