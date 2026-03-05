@@ -464,7 +464,7 @@ elif aba == "Área do Mestre":
     # 1. Defina sua senha aqui
     SENHA_MESTRE = "12345" 
 
-    if "mestre_autenticado" not in st.session_stateDEF:
+    if "mestre_autenticado" not in st.session_state:
         st.session_state.mestre_autenticado = False
 
     # 2. TELA DE LOGIN (Se não estiver autenticado)
