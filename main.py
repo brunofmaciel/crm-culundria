@@ -24,7 +24,7 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
     [data-testid="stAppViewContainer"] { background-color: #0b0e27; color: #ffffff; font-family: 'Montserrat', sans-serif; }
     [data-testid="stSidebar"] { background-color: #050714; }
-    .stMetric { background-color: #161b3d; padding: 1.0rem; border-radius: 10px; border: 1px solid #e68a00; }
+    .stMetric { background-color: #161b3d; padding: 0.75rem; border-radius: 10px; border: 1px solid #e68a00; }
     h1, h2, h3, h4 { color: #ffffff !important; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .stButton>button { width: 100%; border-radius: 5px; background-color: #e68a00; color: white; font-weight: bold; border: none; padding: 0.6rem; }
     .stProgress > div > div > div > div { background-image: linear-gradient(to right, #e68a00, #ffcc33); }
@@ -161,7 +161,7 @@ if aba == "Meu Painel":
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
         
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3 = st.columns(1,2,1)
             with c1:
                 st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
