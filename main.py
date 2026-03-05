@@ -51,18 +51,22 @@ def conectar_google_sheets():
 client = conectar_google_sheets()
 NOME_PLANILHA = "crm-culundria"
 # --- FUNÇÃO DE NÍVEIS ---
-def calcular_status_confraria(pontos):
-    try: p = float(pontos)
-    except: p = 0.0
+def calcular_status_confraria(pontos_totais):
+    try: 
+        p = float(pontos_totais)
+    except: 
+        p = 0.0
+        
+    # A lógica de faixas permanece, mas agora baseada no histórico
     if p <= 500:
         return {"nivel": "Explorador", "desc": "Descobrindo novos horizontes.", "cor": "#a8dadc", "proximo_pts": 500, "msg": "Falta pouco para ser 'Chegado'."}
     elif p <= 1000:
         return {"nivel": "Chegado", "desc": "A casa já é sua!", "cor": "#e68a00", "proximo_pts": 1000, "msg": "Continue para ser 'Tarimbado'."}
     elif p <= 2000:
-        return {"nivel": "Tarimbado", "desc": "Veterano de guerra!", "cor": "#d4a017", "proximo_pts": 2000, "msg": "Se torne um Patrimônio! Faça um novo pedido e supere os 2000 goles"}
+        return {"nivel": "Tarimbado", "desc": "Veterano de guerra!", "cor": "#d4a017", "proximo_pts": 2000, "msg": "Se torne um Patrimônio!"}
     else:
         return {"nivel": "Patrimônio", "desc": "Você é uma lenda sagrada.", "cor": "#ffcc33", "proximo_pts": p, "msg": "Obrigado, lenda! 🍻"}
-
+        
 # --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO DINÂMICA ---
 if "logado" not in st.session_state: st.session_state.logado = False
 if "dados_usuario" not in st.session_state: st.session_state.dados_usuario = None
