@@ -51,21 +51,44 @@ def conectar_google_sheets():
 client = conectar_google_sheets()
 NOME_PLANILHA = "crm-culundria"
 # --- FUNÇÃO DE NÍVEIS ---
-def calcular_status_confraria(pontos_totais):
+def calcular_status_confraria(pontos_historicos):
     try: 
-        p = float(pontos_totais)
+        p = float(pontos_historicos)
     except: 
         p = 0.0
-        
-    # A lógica de faixas permanece, mas agora baseada no histórico
+    
     if p <= 500:
-        return {"nivel": "Explorador", "desc": "Descobrindo novos horizontes.", "cor": "#a8dadc", "proximo_pts": 500, "msg": "Falta pouco para ser 'Chegado'."}
+        return {
+            "nivel": "Explorador", 
+            "desc": "Descobrindo novos horizontes.", 
+            "cor": "#a8dadc", 
+            "proximo_pts": 501, 
+            "msg": f"Faltam {int(501 - p)} goles para ser 'Nosso Chegado'."
+        }
     elif p <= 1000:
-        return {"nivel": "Chegado", "desc": "A casa já é sua!", "cor": "#e68a00", "proximo_pts": 1000, "msg": "Continue para ser 'Tarimbado'."}
+        return {
+            "nivel": "Nosso Chegado", 
+            "desc": "A casa já é sua!", 
+            "cor": "#e68a00", 
+            "proximo_pts": 1001, 
+            "msg": f"Faltam {int(1001 - p)} goles para ser 'Tarimbado'."
+        }
     elif p <= 2000:
-        return {"nivel": "Tarimbado", "desc": "Veterano de guerra!", "cor": "#d4a017", "proximo_pts": 2000, "msg": "Se torne um Patrimônio!"}
+        return {
+            "nivel": "Tarimbado", 
+            "desc": "Veterano de guerra!", 
+            "cor": "#d4a017", 
+            "proximo_pts": 2001, 
+            "msg": f"Faltam {int(2001 - p)} goles para se tornar um 'Patrimônio'!"
+        }
     else:
-        return {"nivel": "Patrimônio", "desc": "Você é uma lenda sagrada.", "cor": "#ffcc33", "proximo_pts": p, "msg": "Obrigado, lenda! 🍻"}
+        return {
+            "nivel": "Patrimônio", 
+            "desc": "Você é uma lenda sagrada.", 
+            "cor": "#ffcc33", 
+            "proximo_pts": p, 
+            "msg": "Obrigado, lenda! 🍻"
+        }
         
 # --- 3. CONFIGURAÇÃO DE SESSÃO E NAVEGAÇÃO DINÂMICA ---
 if "logado" not in st.session_state: st.session_state.logado = False
