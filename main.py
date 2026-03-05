@@ -163,11 +163,11 @@ if aba == "Meu Painel":
         
             c1, c2, c3 = st.columns(3)
             with c1:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
             with c3:
-                st.markdown(f'<div class="stMetric"><p style="font-size:0.7rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
 
             st.write("") 
             st.write(f"**Status:** {status['desc']}")
@@ -183,11 +183,11 @@ if aba == "Meu Painel":
             url_app = "https://golesdevantagemculundria.streamlit.app" # Verifique se a URL está correta
             link_ref = f"{url_app}/?ref={u['ID_Cliente']}"
             
-            st.info("Ganhe **50 Goles** extras por cada amigo que se cadastrar pelo seu link!")
+            st.info("Ganhe **50 Goles** por cada amigo que se cadastrar pelo seu link e efetuar a compra!")
             st.code(link_ref, language="text")
             
             # Botão de WhatsApp
-            msg_wa = urllib.parse.quote(f"Bora tomar uma na Culundria? Se cadastra pelo meu link e a gente ganha bônus: {link_ref}")
+            msg_wa = urllib.parse.quote(f"Bora tomar uma Culundria? Se cadastra pelo meu link e a gente ganha bônus: {link_ref}")
             st.markdown(f"""
                 <a href="https://wa.me/?text={msg_wa}" target="_blank">
                     <button style="width:100%; border-radius:5px; background-color:#25d366; color:white; font-weight:bold; border:none; padding:10px; cursor:pointer;">
