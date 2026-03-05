@@ -17,6 +17,19 @@ voucher_detectado = query_params.get("voucher", None)
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
+def verificar_acesso_mestre(senha_digitada):
+    try:
+        sh = client.open("crm-culundria")
+        aba_config = sh.worksheet("CONFIG")
+        admins = aba_config.get_all_records()
+        
+        for admin in admins:
+            if str(admin['Chave_Mestre']).strip() == str(senha_digitada).strip():
+                return True, admin['Nome']
+        return False, None
+    except:
+        return False, None
+        
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
 st.markdown("""
     <style>
@@ -379,14 +392,35 @@ elif aba == "Fazer Parte da Confraria":
 # ==========================================
 # ABA 4: AREA DO MESTRE#
 # ==========================================
-elif aba == "Área do Mestre":
-    st.title("🏰 Gestão Culundria")
+def exibir_area_mestre():
+    st.title("🧙‍♂️ Grimório da Culundria")
     
-    # 1. Autenticação Única
-    senha_adm = st.text_input("Chave do Grimório:", type="password", key="mestre_unica_pwd")
+    # Se ainda não estiver autenticado, pede a senha
+    if "mestre_autenticado" not in st.session_state:
+        st.session_state.mestre_autenticado = False
+    if not st.session_state.mestre_autenticado:
+        with st.form("login_mestre"):
+            senha = st.text_input("Insira a Chave do Mestre", type="password")
+            botao_entrar = st.form_submit_button("Acessar Relatórios")
+            
+            if botao_entrar:
+                autorizado, nome_mestre = verificar_acesso_mestre(senha)
+                if autorizado:
+                    st.session_state.mestre_autenticado = True
+                    st.session_state.nome_mestre = nome_mestre
+                    st.rerun() # Recarrega para mostrar o conteúdo
+                else:
+                    st.error("Chave inválida. Acesso negado.")
+        return # Para a execução aqui até que ele logue
+
+    # --- DAQUI PARA BAIXO SEGUE O SEU CÓDIGO ORIGINAL DA ÁREA DE MESTRE ---
+    st.success(f"Logado como: Mestre {st.session_state.nome_mestre}")
     
-    if senha_adm == st.secrets["admin_password"]:
-        st.success("Acesso autorizado, Mestre!")
+    if st.button("Sair da Área Administrativa"):
+        st.session_state.mestre_autenticado = False
+        st.rerun()
+
+    
         
         # 2. Criação das Abas ANTES de usá-las
         tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
