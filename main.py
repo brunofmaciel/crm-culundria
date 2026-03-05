@@ -183,7 +183,7 @@ if aba == "Meu Painel":
                 cor_inat = "#ff4b4b" if dias_inatividade > 60 else "#aaa"
                 st.markdown(f"""
                     <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid {cor_inat};">
-                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SUA ÚLTIMA COMPRA FOR</p>
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SUA ÚLTIMA COMPRA FOi</p>
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">HÁ {dias_inatividade} DIAS</h2>
                     </div>
                 """, unsafe_allow_html=True)
