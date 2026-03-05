@@ -203,7 +203,7 @@ if aba == "Meu Painel":
             if not meu_hist.empty:
                 # Formata para exibição
                 meu_hist.columns = [str(c).strip() for c in meu_hist.columns]
-                colunas_desejadas = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']
+                colunas_desejadas = ['Data_Venda', 'Estilo_Chopp', 'Goles_ganhos', 'Total_Pontos']
                 colunas_existentes = [c for c in colunas_desejadas if c in meu_hist.columns]
                 if colunas_existentes:
                     exibir = meu_hist[colunas_existentes].copy()
