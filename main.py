@@ -125,6 +125,9 @@ with st.sidebar:
 # ==========================================
 # ABA 1: MEU PAINEL (LOGIN E STATUS)
 # ==========================================
+# ==========================================
+# ABA 1: MEU PAINEL (LOGIN E STATUS)
+# ==========================================
 if aba == "Meu Painel":
     # --- CAPTURA DE INDICAÇÃO (Rastreamento) ---
     query_params = st.query_params
@@ -187,28 +190,31 @@ if aba == "Meu Painel":
             except:
                 pass
 
-            # --- 2. MÉTRICAS ---
-            # --- 2. MÉTRICAS ---
-            # Buscamos os valores com segurança (caso a coluna não venha, o padrão é 0)
-            saldo_disponivel = u.get('Saldo_Atual', 0)    # O que ele pode GASTAR
-            pontos_vida_toda = u.get('Pontos_Totais', 0)  # O que define o STATUS
+            # --- 2. MÉTRICAS (LÓGICA CORRIGIDA) ---
+            # Pegamos os valores garantindo que sejam numéricos
+            try:
+                saldo_disponivel = float(u.get('Saldo_Atual', 0))
+                pontos_vida_toda = float(u.get('Pontos_Totais', 0))
+            except:
+                saldo_disponivel = 0.0
+                pontos_vida_toda = 0.0
 
-            # Agora usamos a função de status baseada no HISTÓRICO
+            # O STATUS agora é calculado obrigatoriamente pelos PONTOS TOTAIS
             status = calcular_status_confraria(pontos_vida_toda)
 
             c1, c2, c3 = st.columns([1, 1, 1])
 
             with c1:
                 st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
-                          <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO DISPONÍVEL</p>
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00; height: 100px;">
+                        <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">SALDO DISPONÍVEL</p>
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{int(saldo_disponivel)} GOLES</h2>
                     </div>
                 """, unsafe_allow_html=True)
 
             with c2:
                 st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00;">
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid #e68a00; height: 100px;">
                         <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">STATUS</p>
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{status['nivel'].upper()}</h2>
                     </div>
@@ -217,17 +223,24 @@ if aba == "Meu Painel":
             with c3:
                 cor_inat = "#ff4b4b" if dias_inatividade > 60 else "#aaa"
                 st.markdown(f"""
-                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid {cor_inat};">
+                    <div style="background-color: #161b3d; padding: 15px; border-radius: 5px; border-bottom: 4px solid {cor_inat}; height: 100px;">
                         <p style="margin:0; font-size: 0.7rem; color: #aaa; font-weight: bold; text-transform: uppercase;">INATIVIDADE</p>
                         <h2 style="margin:0; font-size: 1.6rem; color: #ffffff; font-weight: 700;">{dias_inatividade} DIAS</h2>
                     </div>
                 """, unsafe_allow_html=True)
     
             st.write("") 
-            st.write(f"**Nível:** {status['nivel']} — *{status['desc']}*")
-            st.info(status['msg']) # Mostra quanto falta para o próximo nível
+            st.write(f"**Nível Atual:** {status['nivel']}")
+            st.write(f"*{status['desc']}*")
+            
+            # Lógica da Mensagem de Progresso
+            if pontos_vida_toda > 2000:
+                st.success("👑 Você é um Patrimônio da Culundria!")
+            else:
+                faltam = int(status['proximo_pts'] - pontos_vida_toda)
+                st.info(f"🍻 Faltam **{faltam} goles** para o próximo nível!")
 
-# Ajuste da Barra de Progresso (Baseada nos Pontos Totais)
+            # Ajuste da Barra de Progresso
             limite = status['proximo_pts']
             progresso = min(float(pontos_vida_toda) / limite, 1.0) if limite > 0 else 0
             st.progress(progresso)
@@ -435,7 +448,7 @@ elif aba == "Área do Mestre":
     # 1. Defina sua senha aqui
     SENHA_MESTRE = "12345" 
 
-    if "mestre_autenticado" not in st.session_state:
+    if "mestre_autenticado" not in st.session_stateDEF:
         st.session_state.mestre_autenticado = False
 
     # 2. TELA DE LOGIN (Se não estiver autenticado)
