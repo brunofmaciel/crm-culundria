@@ -19,15 +19,21 @@ def gerar_codigo():
 
 def verificar_acesso_mestre(senha_digitada):
     try:
-        sh = client.open("crm-culundria")
-        aba_config = sh.worksheet("CONFIG")
+        sh = client.open(NOME_PLANILHA)
+        # Tenta abrir a aba CONFIG ou ADMINS (ajuste o nome se for diferente)
+        try:
+            aba_config = sh.worksheet("CONFIG")
+        except:
+            aba_config = sh.worksheet("ADMINS")
+            
         admins = aba_config.get_all_records()
-        
         for admin in admins:
-            if str(admin['Chave_Mestre']).strip() == str(senha_digitada).strip():
-                return True, admin['Nome']
+            # Compara a senha (coluna deve se chamar Chave_Mestre)
+            if str(admin.get('Chave_Mestre', '')).strip() == str(senha_digitada).strip():
+                return True, admin.get('Nome', 'Mestre')
         return False, None
-    except:
+    except Exception as e:
+        st.error(f"Erro técnico na aba CONFIG: {e}")
         return False, None
         
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
@@ -395,25 +401,29 @@ elif aba == "Fazer Parte da Confraria":
 def exibir_area_mestre():
     st.title("🧙‍♂️ Grimório da Culundria")
     
-    # 1. Gerenciamento de Autenticação na Sessão
+    # Inicializa o estado se não existir
     if "mestre_autenticado" not in st.session_state:
         st.session_state.mestre_autenticado = False
 
-    # 2. Tela de Login (Se não estiver autenticado)
+    # TELA DE LOGIN
     if not st.session_state.mestre_autenticado:
-        with st.form("login_mestre"):
-            senha = st.text_input("Insira a Chave do Mestre", type="password")
-            botao_entrar = st.form_submit_button("Acessar Relatórios")
+        st.info("Acesso restrito aos Mestres Cervejeiros.")
+        with st.form("form_login_mestre"):
+            senha = st.text_input("Chave do Grimório", type="password")
+            btn = st.form_submit_button("Abrir Relatórios")
             
-            if botao_entrar:
-                autorizado, nome_mestre = verificar_acesso_mestre(senha)
-                if autorizado:
-                    st.session_state.mestre_autenticado = True
-                    st.session_state.nome_mestre = nome_mestre
-                    st.rerun() 
+            if btn:
+                if senha:
+                    com_sucesso, nome = verificar_acesso_mestre(senha)
+                    if com_sucesso:
+                        st.session_state.mestre_autenticado = True
+                        st.session_state.nome_mestre = nome
+                        st.rerun()
+                    else:
+                        st.error("Chave incorreta ou mestre não cadastrado.")
                 else:
-                    st.error("Chave inválida. Acesso negado.")
-        return # Interrompe aqui para não mostrar as abas sem senha
+                    st.warning("Por favor, insira a chave.")
+        return # Trava aqui até logar
 
     # --- 3. ÁREA AUTORIZADA (Só chega aqui se autenticado) ---
     st.success(f"Logado como: Mestre {st.session_state.nome_mestre}")
