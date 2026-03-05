@@ -161,13 +161,13 @@ if aba == "Meu Painel":
             saldo = u.get('Saldo_Atual', 0)
             status = calcular_status_confraria(saldo)
         
-            c1, c2, c3 = st.columns(1,2,1)
+            c1, c2, c3 = st.columns(3)
             with c1:
-                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.0rem; color:#aaa;">SALDO</p><h2 style="color:#e68a00;">{int(saldo)} Goles</h2></div>', unsafe_allow_html=True)
             with c2:
-                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.0rem; color:#aaa;">STATUS</p><h2>{status["nivel"]}</h2></div>', unsafe_allow_html=True)
             with c3:
-                st.markdown(f'<div class="stMetric"><p style="font-size:1.5rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stMetric"><p style="font-size:1.0rem; color:#aaa;">INATIVIDADE</p><h2>{dias_inatividade} dias</h2></div>', unsafe_allow_html=True)
 
             st.write("") 
             st.write(f"**Status:** {status['desc']}")
