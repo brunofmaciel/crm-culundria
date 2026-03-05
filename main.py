@@ -202,13 +202,21 @@ if aba == "Meu Painel":
             
             if not meu_hist.empty:
                 # Formata para exibição
-                exibir = meu_hist[['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']].copy()
-                exibir['Data_Venda'] = exibir['Data_Venda'].dt.strftime('%d/%m/%Y')
-                exibir.columns = ['Data', 'Estilo', 'Litros', 'Goles Ganhos']
-                st.table(exibir.sort_index(ascending=False))
+                meu_hist.columns = [str(c).strip() for c in meu_hist.columns]
+                colunas_desejadas = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos']
+                colunas_existentes = [c for c in colunas_desejadas if c in meu_hist.columns]
+                if colunas_existentes:
+                exibir = meu_hist[colunas_existentes].copy()
+                
+                # Opcional: Renomear para ficar bonito no app
+                exibir.columns = [c.replace('_', ' ') for c in exibir.columns]
+        
+                st.dataframe(exibir, use_container_width=True)
             else:
-                st.info("Você ainda não registrou barris. Peça o seu primeiro!")
-
+                st.warning("As colunas de histórico não foram encontradas na planilha.")
+        else:
+            st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
+            
             # --- 5. BOTÃO DE SAIR ---
             if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
                 st.session_state.logado = False
