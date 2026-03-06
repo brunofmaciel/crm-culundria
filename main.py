@@ -34,7 +34,7 @@ def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
         # Filtra indicação pendente por nome ou whats
         filtro = (df_ind['Venda_Concluída'] == "NÃO") & \
                  ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente).strip()) | 
-                  (df_ind['Nome_Amigo'] == str(nome_cliente).upper().strip()))
+                  (df_ind['ID_Cliente'] == str(nome_cliente).upper().strip()))
         
         idx = df_ind[filtro].index
         if not idx.empty:
