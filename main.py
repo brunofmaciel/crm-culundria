@@ -15,8 +15,8 @@ st.markdown(
     <style>
         /* Estiliza o container da Sidebar */
         [data-testid="stSidebar"] {
-            background-color: #001f3f; /* Substitua pelo seu Azul (ex: Navy Blue) */
-            border-right: 3px solid #FFBF00; /* Borda fina no Âmbar */
+            background-color: #0b0e27; /* Substitua pelo seu Azul (ex: Navy Blue) */
+            border-right: 3px solid #e68a00; /* Borda fina no Âmbar */
         }
 
         /* Ajusta a cor dos textos para branco para contrastar com o azul */
