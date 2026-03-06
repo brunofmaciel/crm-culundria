@@ -567,11 +567,14 @@ elif aba == "Área do Mestre":
         tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
         
         try:
-            # Carregamento de Dados
-            sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-            df_c = ler_planilha_sem_erro(sh_c)
+            try:
+            # --- CONEXÃO COM AS ABAS (IMPORTANTE!) ---
+            sh = client.open(NOME_PLANILHA)
+            sh_v = sh.worksheet("VENDAS")
+            sh_c = sh.worksheet("CLIENTES") # <--- ISSO RESOLVE O ERRO 'sh_c not defined'
             
-            sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+            # Carregamento de Dados usando a função blindada
+            df_v = ler_planilha_sem_erro(sh_v)
             df_c = ler_planilha_sem_erro(sh_c)
             
             # Limpeza e Conversão de Segurança
@@ -629,10 +632,25 @@ elif aba == "Área do Mestre":
             # --- ABA 3: RANKING ---
             with tab_ranking:
                 st.subheader("🏆 Top Confrades")
+                # Garante que as colunas existem antes de ordenar
                 col_pontos = 'Pontos_Totais' if 'Pontos_Totais' in df_c.columns else 'Saldo_Atual'
-                if col_pontos in df_c.columns:
+                
+                if not df_c.empty and col_pontos in df_c.columns:
+                    # Converte para número para não ordenar errado
+                    df_c[col_pontos] = pd.to_numeric(df_c[col_pontos], errors='coerce').fillna(0)
                     top_10 = df_c.nlargest(10, col_pontos)[['Nome_Completo', col_pontos]]
                     st.table(top_10)
-                    
+                else:
+                    st.info("Ainda não há dados para o ranking.")
+
         except Exception as e:
-            st.error(f"Erro ao carregar dados: {e}")
+            st.error(f"Erro ao carregar dados do Mestre: {e}")
+            #with tab_ranking:
+             #   st.subheader("🏆 Top Confrades")
+              #  col_pontos = 'Pontos_Totais' if 'Pontos_Totais' in df_c.columns else 'Saldo_Atual'
+               # if col_pontos in df_c.columns:
+                #    top_10 = df_c.nlargest(10, col_pontos)[['Nome_Completo', col_pontos]]
+                 #   st.table(top_10)
+                    
+        #except Exception as e:
+         #   st.error(f"Erro ao carregar dados: {e}")
