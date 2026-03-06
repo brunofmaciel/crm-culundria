@@ -394,46 +394,63 @@ elif aba == "Loja de Souvenirs":
 
             
 # ==========================================
-# ==========================================
 # ABA 3: CADASTRO (FAZER PARTE DA CONFRARIA)
-# ==========================================# --- FUNÇÕES DE APOIO (Coloque aqui, antes das abas) ---
-
-def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
-    try:
-        sh = client.open(NOME_PLANILHA)
-        aba_ind = sh.worksheet("INDICAÇÕES")
-        aba_cli = sh.worksheet("CLIENTES")
+# ==========================================
+elif aba == "Fazer Parte da Confraria":
+    st.title("🧪 Entre para a Confraria")
+    st.write("Preencha seus dados para começar a acumular goles!")
+    
+    # Usamos um formulário para organizar os campos
+    with st.form("form_cadastro_culundria", clear_on_submit=True):
+        nome = st.text_input("Nome Completo")
+        cpf_cad = st.text_input("CPF (apenas 11 números)")
+        whats = st.text_input("WhatsApp (com DDD)")
+        email = st.text_input("E-mail")
+        senha_cad = st.text_input("Crie uma Senha", type="password")
         
-        dados_ind = aba_ind.get_all_records()
-        if not dados_ind: return
+        enviar = st.form_submit_button("CRIAR MINHA CONTA")
         
-        df_ind = pd.DataFrame(dados_ind)
-
-        # Filtra: Venda pendente AND (Telefone igual OR Nome igual)
-        filtro = (df_ind['Venda_Concluída'] == "NÃO") & \
-                 ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente).strip()) | 
-                  (df_ind['Nome_Amigo'] == nome_cliente.upper().strip()))
-        
-        idx = df_ind[filtro].index
-
-        if not idx.empty:
-            linha_f = idx[0] + 2 
-            id_padrinho = str(df_ind.iloc[idx[0]]['ID_Padrinho']).strip()
-
-            # 1. Marca como "SIM" para não pagar duas vezes
-            aba_ind.update_cell(linha_f, 4, "SIM")
-
-            # 2. Localiza Padrinho e dá os 50 Goles
-            cel_p = aba_cli.find(id_padrinho)
-            if cel_p:
-                val_saldo = float(aba_cli.cell(cel_p.row, 11).value or 0)
-                val_total = float(aba_cli.cell(cel_p.row, 6).value or 0)
-                
-                aba_cli.update_cell(cel_p.row, 11, val_saldo + 50) # Saldo Atual
-                aba_cli.update_cell(cel_p.row, 6, val_total + 50)  # Pontos Totais (Status)
-                st.toast(f"🎁 Bónus de Indicação enviado ao Padrinho!")
-    except:
-        pass
+        if enviar:
+            # Limpeza do CPF (remove pontos e traços)
+            cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
+            
+            if nome and len(cpf_limpo) == 11 and senha_cad:
+                try:
+                    sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
+                    
+                    # --- TRAVA DE SEGURANÇA: VERIFICA SE CPF JÁ EXISTE ---
+                    cpfs_existentes = sh_c.col_values(1) # Coluna A
+                    
+                    if cpf_limpo in cpfs_existentes:
+                        st.error("🚫 Este CPF já é de um Confrade! Tente fazer Login.")
+                    else:
+                        # Se não existe, monta a linha para a planilha (11 colunas)
+                        # A(ID), B(Nome), C(Telefone), D(Email), E(Nível), F(Pts T), G(Progr), H(Data), I(Senha), J(Gastos), K(Saldo)
+                        nova_linha = [
+                            cpf_limpo, 
+                            nome.strip().upper(), 
+                            whats.strip(), 
+                            email.strip().lower(), 
+                            "Explorador", 
+                            100, # Pontos de boas-vindas
+                            0,   # Progresso inicial
+                            pd.Timestamp.now().strftime("%d/%m/%Y"), 
+                            str(senha_cad).strip(),
+                            0,   # Pontos Gastos inicial
+                            100  # Saldo Atual inicial
+                        ]
+                        
+                        # Localiza a próxima linha vazia real e atualiza
+                        proxima_vazia = len(cpfs_existentes) + 1
+                        sh_c.update(f"A{proxima_vazia}:K{proxima_vazia}", [nova_linha])
+                        
+                        st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada com 100 Goles de bônus.")
+                        st.balloons()
+                        
+                except Exception as e:
+                    st.error(f"Erro ao acessar o banco de dados: {e}")
+            else:
+                st.warning("⚠️ Por favor, preencha Nome, CPF (11 dígitos) e Senha.")
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
