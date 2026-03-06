@@ -212,37 +212,37 @@ if aba == "Meu Painel":
             st.title(f"🍻 Painel do Confrade")
             st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
 
-    # --- BOTÃO DE ATUALIZAÇÃO (Exatamente 4 espaços à frente do 'if u') ---# --- NO BOTÃO DE ATUALIZAR DO CLIENTE (PAINEL DO CONFRADE) ---
-    if st.button("🔄 ATUALIZAR MEUS GOLES", use_container_width=True):
-        with st.spinner("Sincronizando com o barril..."):
-            try:
-                sh = client.open(NOME_PLANILHA)
-                df_vendas = ler_planilha_sem_erro(sh.worksheet("VENDAS"))
-                df_ind = ler_planilha_sem_erro(sh.worksheet("INDICAÇÕES"))
-                aba_ind = sh.worksheet("INDICAÇÕES")
-                aba_cli = sh.worksheet("CLIENTES")
-    
-                cpf_logado = str(st.session_state.dados_usuario['ID_Cliente']).strip()
-    
-                # --- MÁGICA: VERIFICAR SE AMIGOS DESTE PADRINHO COMPRARAM ---
-                # Filtra indicações feitas por este usuário que ainda não foram pagas
-                minhas_ind_pendentes = df_ind[(df_ind['ID_Padrinho'].astype(str) == cpf_logado) & 
-                                              (df_ind['Venda_Concluída'] == "NÃO")]
-    
-                for i, linha in minhas_ind_pendentes.iterrows():
-                    cpf_amigo = str(linha['CPF_Amigo']).strip()
-                    
-                    # Se o CPF do amigo estiver na aba VENDAS...
-                    if cpf_amigo in df_vendas['ID_Cliente'].astype(str).values:
-                        # 1. Marca como "SIM" na aba INDICAÇÕES (Coluna D / 4)
-                        aba_ind.update_cell(i + 2, 4, "SIM")
+        # --- BOTÃO DE ATUALIZAÇÃO (Exatamente 4 espaços à frente do 'if u') ---# --- NO BOTÃO DE ATUALIZAR DO CLIENTE (PAINEL DO CONFRADE) ---
+        if st.button("🔄 ATUALIZAR MEUS GOLES", use_container_width=True):
+            with st.spinner("Sincronizando com o barril..."):
+                try:
+                    sh = client.open(NOME_PLANILHA)
+                    df_vendas = ler_planilha_sem_erro(sh.worksheet("VENDAS"))
+                    df_ind = ler_planilha_sem_erro(sh.worksheet("INDICAÇÕES"))
+                    aba_ind = sh.worksheet("INDICAÇÕES")
+                    aba_cli = sh.worksheet("CLIENTES")
+        
+                    cpf_logado = str(st.session_state.dados_usuario['ID_Cliente']).strip()
+        
+                    # --- MÁGICA: VERIFICAR SE AMIGOS DESTE PADRINHO COMPRARAM ---
+                    # Filtra indicações feitas por este usuário que ainda não foram pagas
+                    minhas_ind_pendentes = df_ind[(df_ind['ID_Padrinho'].astype(str) == cpf_logado) & 
+                                                  (df_ind['Venda_Concluída'] == "NÃO")]
+        
+                    for i, linha in minhas_ind_pendentes.iterrows():
+                        cpf_amigo = str(linha['CPF_Amigo']).strip()
                         
-                        # 2. Adiciona 50 Goles ao saldo do Padrinho (quem está logado)
-                        cel_p = aba_cli.find(cpf_logado)
-                        saldo_atual = float(aba_cli.cell(cel_p.row, 11).value or 0)
-                        aba_cli.update_cell(cel_p.row, 11, saldo_atual + 50)
-                        st.toast(f"🎉 Bônus de 50 Goles recebido por indicar um amigo!")
-            
+                        # Se o CPF do amigo estiver na aba VENDAS...
+                        if cpf_amigo in df_vendas['ID_Cliente'].astype(str).values:
+                            # 1. Marca como "SIM" na aba INDICAÇÕES (Coluna D / 4)
+                            aba_ind.update_cell(i + 2, 4, "SIM")
+                            
+                            # 2. Adiciona 50 Goles ao saldo do Padrinho (quem está logado)
+                            cel_p = aba_cli.find(cpf_logado)
+                            saldo_atual = float(aba_cli.cell(cel_p.row, 11).value or 0)
+                            aba_cli.update_cell(cel_p.row, 11, saldo_atual + 50)
+                            st.toast(f"🎉 Bônus de 50 Goles recebido por indicar um amigo!")
+                
                         # --- FIM DA VERIFICAÇÃO DE BÔNUS ---
             
                         # Atualiza os dados da sessão para mostrar o novo saldo
