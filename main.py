@@ -353,30 +353,34 @@ elif aba == "Loja de Souvenirs":
     if not st.session_state.logado:
         st.warning("Faça login no 'Meu Painel' para acessar a loja!")
     else:
-        # 1. BUSCA PRODUTOS DA PLANILHA EM TEMPO REAL
+        # 1. CONEXÃO E BUSCA DE PRODUTOS
         try:
-            sh = client.open(NOME_PLANILHA)
+            sh = client.open(NOME_PLANILHA) # Abre a planilha mestre
+            
+            # Define a aba de produtos
             aba_p = sh.worksheet("PRODUTOS")
-            df_c = ler_planilha_sem_erro(sh_c)
+            df_p = ler_planilha_sem_erro(aba_p) # Usa a função blindada que criamos
+            
             # Filtra apenas ATIVO = SIM
             produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
+            
+            # --- CORREÇÃO DO ERRO AQUI ---
+            # Define a aba de clientes (sh_c) para poder buscar o saldo real
+            sh_c = sh.worksheet("CLIENTES") 
+            
+            c = st.session_state.dados_usuario
+            cpf_logado = str(c['ID_Cliente']).strip()
+            
+            # Busca a linha do usuário para ter o saldo mais atualizado possível
+            celula_usuario = sh_c.find(cpf_logado)
+            
+            # Saldo na Coluna K (11)
+            saldo_real = float(sh_c.cell(celula_usuario.row, 11).value or 0)
+            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
+            
         except Exception as e:
             st.error(f"Erro ao carregar catálogo: {e}")
             st.stop()
-
-        # 2. SINCRONIZAÇÃO DE SALDO REAL
-        try:
-            aba_c = sh.worksheet("CLIENTES")
-            c = st.session_state.dados_usuario
-            cpf_logado = str(c['ID_Cliente'])
-            celula_usuario = aba_c.find(cpf_logado)
-            # Saldo na Coluna K (11)
-            saldo_real = float(aba_c.cell(celula_usuario.row, 11).value)
-            st.subheader(f"Seu Saldo: {int(saldo_real)} Goles")
-        except:
-            st.error("Erro ao sincronizar saldo.")
-            st.stop()
-
         # 3. EXIBIÇÃO DOS PRODUTOS
         cols = st.columns(2)
         for i, p in enumerate(produtos):
