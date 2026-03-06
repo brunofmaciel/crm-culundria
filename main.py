@@ -541,7 +541,7 @@ elif aba == "Fazer Parte da Confraria":
                                     data_hoje,
                                     "NÃO", 
                                     50,
-                                    str(padrinho_id)
+                                    str(padrinho_id),
                                     cpf_limpo   #adiciona o cpf na coluna 6 da planilha
                                 ]
                                 sh_ind.append_row(nova_indicao)
