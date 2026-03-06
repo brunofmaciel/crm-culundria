@@ -213,26 +213,31 @@ if aba == "Meu Painel":
             st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
 
               
-            # --- 1. PROCESSAMENTO DE DADOS (INATIVIDADE) ---
+                        # --- 1. PROCESSAMENTO DE DADOS (INATIVIDADE E HISTÓRICO) ---
             dias_inatividade = 0
             meu_hist = pd.DataFrame()
             
             try:
                 sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-                df_c = ler_planilha_sem_erro(sh_c)
-                df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.strip()
-                meu_hist = df_v[df_v['ID_Cliente'] == str(u['ID_Cliente']).strip()].copy()
+                # Usamos a função segura que remove colunas vazias
+                df_v = ler_aba_segura(sh_v) 
                 
-                if not meu_hist.empty:
-                    meu_hist['Data_Venda'] = pd.to_datetime(meu_hist['Data_Venda'], dayfirst=True, errors='coerce')
-                    meu_hist = meu_hist.dropna(subset=['Data_Venda'])
+                if not df_v.empty:
+                    # NORMALIZAÇÃO: Remove espaços e garante que tudo seja STRING para comparar
+                    df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.strip()
+                    cpf_logado = str(u['ID_Cliente']).strip()
+                    
+                    # FILTRAGEM
+                    meu_hist = df_v[df_v['ID_Cliente'] == cpf_logado].copy()
                     
                     if not meu_hist.empty:
+                        # Converte data para cálculo de inatividade
+                        meu_hist['Data_Venda'] = pd.to_datetime(meu_hist['Data_Venda'], dayfirst=True, errors='coerce')
                         ultima_compra = meu_hist['Data_Venda'].max()
-                        dias_inatividade = (pd.Timestamp.now() - ultima_compra).days
-            except:
-                pass
-
+                        if pd.notnull(ultima_compra):
+                            dias_inatividade = (pd.Timestamp.now() - ultima_compra).days
+            except Exception as e:
+                st.error(f"Erro ao carregar histórico: {e}")
             # --- 2. MÉTRICAS (LÓGICA CORRIGIDA) ---
             # Pegamos os valores garantindo que sejam numéricos
             try:
@@ -315,13 +320,20 @@ if aba == "Meu Painel":
             st.subheader("🛢️ Histórico de Consumo")
             
             if not meu_hist.empty:
+                # Limpa nomes de colunas para exibição
                 meu_hist.columns = [str(c).strip() for c in meu_hist.columns]
-                col_des = ['Data_Venda', 'Estilo_Chopp', 'Goles Acumulados', 'Total_Pontos']
+                
+                # Lista de colunas que você quer mostrar (ajuste conforme os nomes exatos na sua planilha)
+                col_des = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos'] 
+                
+                # Verifica quais dessas colunas realmente existem na aba VENDAS
                 col_exis = [c for c in col_des if c in meu_hist.columns]
+                
                 if col_exis:
                     exibir = meu_hist[col_exis].copy()
-                    exibir.columns = [c.replace('_', ' ') for c in exibir.columns]
-                    st.dataframe(exibir, use_container_width=True)
+                    # Formata a data para ficar bonita (Dia/Mês/Ano)
+                    exibir['Data_Venda'] = exibir['Data_Venda'].dt.strftime('%d/%m/%Y')
+                    st.dataframe(exibir, use_container_width=True, hide_index=True)
             else:
                 st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
                                 
