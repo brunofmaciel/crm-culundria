@@ -19,7 +19,7 @@ with st.sidebar:
     # Verifica se o arquivo existe na pasta raiz
     if os.path.exists("logoculundria.png"):
         # Criamos colunas para centralizar o logo
-        col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 4, 1])
+        col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 6, 1])
         with col_logo_2:
             st.image("logoculundria.png", use_container_width=True)
     else:
