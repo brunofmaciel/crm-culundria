@@ -212,50 +212,7 @@ if aba == "Meu Painel":
             st.title(f"🍻 Painel do Confrade")
             st.subheader(f"Bem-vindo, {u.get('Nome_Completo', 'Amigo').split()[0]}!")
 
-            # --- BOTÃO DE ATUALIZAÇÃO (Exatamente 4 espaços à frente do 'if u')
-            
-            # --- NO BOTÃO DE ATUALIZAR DO CLIENTE (PAINEL DO CONFRADE) ---
-if st.button("🔄 ATUALIZAR MEUS GOLES", use_container_width=True):
-    with st.spinner("Sincronizando com o barril..."):
-        try:
-            sh = client.open(NOME_PLANILHA)
-            df_vendas = ler_planilha_sem_erro(sh.worksheet("VENDAS"))
-            df_ind = ler_planilha_sem_erro(sh.worksheet("INDICAÇÕES"))
-            aba_ind = sh.worksheet("INDICAÇÕES")
-            aba_cli = sh.worksheet("CLIENTES")
-
-            cpf_logado = str(st.session_state.dados_usuario['ID_Cliente']).strip()
-
-            # --- MÁGICA: VERIFICAR SE AMIGOS DESTE PADRINHO COMPRARAM ---
-            # Filtra indicações feitas por este usuário que ainda não foram pagas
-            minhas_ind_pendentes = df_ind[(df_ind['ID_Padrinho'].astype(str) == cpf_logado) & 
-                                          (df_ind['Venda_Concluída'] == "NÃO")]
-
-            for i, linha in minhas_ind_pendentes.iterrows():
-                cpf_amigo = str(linha['CPF_Amigo']).strip()
-                
-                # Se o CPF do amigo estiver na aba VENDAS...
-                if cpf_amigo in df_vendas['ID_Cliente'].astype(str).values:
-                    # 1. Marca como "SIM" na aba INDICAÇÕES (Coluna D / 4)
-                    aba_ind.update_cell(i + 2, 4, "SIM")
-                    
-                    # 2. Adiciona 50 Goles ao saldo do Padrinho (quem está logado)
-                    cel_p = aba_cli.find(cpf_logado)
-                    saldo_atual = float(aba_cli.cell(cel_p.row, 11).value or 0)
-                    aba_cli.update_cell(cel_p.row, 11, saldo_atual + 50)
-                    st.toast(f"🎉 Bônus de 50 Goles recebido por indicar um amigo!")
-
-            # --- FIM DA VERIFICAÇÃO DE BÔNUS ---
-
-            # Atualiza os dados da sessão para mostrar o novo saldo
-            df_c = ler_planilha_sem_erro(aba_cli)
-            user_atualizado = df_c[df_c['ID_Cliente'].astype(str).str.strip() == cpf_logado]
-            if not user_atualizado.empty:
-                st.session_state.dados_usuario = user_atualizado.iloc[0].to_dict()
-                st.rerun()
-
-        except Exception as e:
-            st.error(f"Erro ao atualizar: {e}")                
+              
             # --- 1. PROCESSAMENTO DE DADOS (INATIVIDADE) ---
             dias_inatividade = 0
             meu_hist = pd.DataFrame()
@@ -536,18 +493,18 @@ elif aba == "Fazer Parte da Confraria":
                                 sh_ind = sh.worksheet("INDICAÇÕES")
                                 # Colunas: Nome_Amigo, Telefone_Amigo, Data_Indicação, Venda_Concluída, Pontos_Gerados, ID_Padrinho
                                 nova_indicao = [
+                                    cpf_limpo, #adiciona o cpf na coluna 1 da planilha Indicações
                                     nome.strip().upper(),
                                     whats.strip(),
                                     data_hoje,
                                     "NÃO", 
                                     50,
                                     str(padrinho_id),
-                                    cpf_limpo   #adiciona o cpf na coluna 6 da planilha
                                 ]
                                 sh_ind.append_row(nova_indicao)
                             except Exception as e_ind:
                                 # Erro na indicação não deve travar o cadastro principal
-                                st.warning("Cadastro feito, mas houve um erro no registro da indicação.")
+                                st.warning("Cadastro realizado, mas bônus não registrado.")
 
                         st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada.")
                         st.balloons()
