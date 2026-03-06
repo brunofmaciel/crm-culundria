@@ -567,7 +567,6 @@ elif aba == "Área do Mestre":
         tab_balcao, tab_relatorios, tab_ranking = st.tabs(["🎫 Validar Voucher", "📊 Relatórios", "🏆 Ranking"])
         
         try:
-            try:
             # --- CONEXÃO COM AS ABAS (IMPORTANTE!) ---
             sh = client.open(NOME_PLANILHA)
             sh_v = sh.worksheet("VENDAS")
