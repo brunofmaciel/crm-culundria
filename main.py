@@ -31,7 +31,7 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True
-
+)
 # 2. CAPTURA DO VOUCHER (Agora o Streamlit já está configurado)
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher", None)
