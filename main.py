@@ -16,7 +16,40 @@ voucher_detectado = query_params.get("voucher", None)
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+# --- FUNÇÃO ROBUSTA PARA LER PLANILHA (EVITA ERRO DE COLUNA VAZIA) ---
+def ler_aba_segura(aba):
+    dados = aba.get_all_values()
+    if not dados: return pd.DataFrame()
+    df = pd.DataFrame(dados[1:], columns=dados[0])
+    return df.loc[:, df.columns != ''] # Remove colunas sem nome
 
+# --- FUNÇÃO PARA PAGAR O PADRINHO (DEVE FICAR NO TOPO) ---
+def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
+    try:
+        sh = client.open(NOME_PLANILHA)
+        aba_ind = sh.worksheet("INDICAÇÕES")
+        aba_cli = sh.worksheet("CLIENTES")
+        df_ind = ler_aba_segura(aba_ind)
+        
+        # Filtra indicação pendente por nome ou whats
+        filtro = (df_ind['Venda_Concluída'] == "NÃO") & \
+                 ((df_ind['Telefone_Amigo'].astype(str) == str(whats_cliente).strip()) | 
+                  (df_ind['Nome_Amigo'] == str(nome_cliente).upper().strip()))
+        
+        idx = df_ind[filtro].index
+        if not idx.empty:
+            linha_f = idx[0] + 2 
+            id_padrinho = str(df_ind.iloc[idx[0]]['ID_Padrinho']).strip()
+            aba_ind.update_cell(linha_f, 4, "SIM") # Coluna D
+            
+            cel_p = aba_cli.find(id_padrinho)
+            if cel_p:
+                val_saldo = float(aba_cli.cell(cel_p.row, 11).value or 0)
+                val_total = float(aba_cli.cell(cel_p.row, 6).value or 0)
+                aba_cli.update_cell(cel_p.row, 11, val_saldo + 50)
+                aba_cli.update_cell(cel_p.row, 6, val_total + 50)
+                st.toast("🎁 Bônus de Indicação creditado ao Padrinho!")
+    except: pass
         
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
 st.markdown("""
@@ -400,13 +433,15 @@ elif aba == "Fazer Parte da Confraria":
     st.title("🧪 Entre para a Confraria")
     st.write("Preencha seus dados para começar a acumular goles!")
     
-    # --- NOVO: Captura o CPF do Padrinho da URL (?ref=123...) ---
-    query_params = st.query_params
-    padrinho_id = query_params.get("ref", None)
+    # 1. Captura o padrinho da URL de forma persistente
+    # Usamos o st.query_params para ler ?ref=CPF
+    params = st.query_params
+    padrinho_id = params.get("ref", None)
 
     if padrinho_id:
-        st.info(f"✨ Vimos que você foi indicado por um Confrade!")# Usamos um formulário para organizar os campos
-        
+        st.success(f"✨ **Indicação Detectada!** Você ganhará bônus ao entrar.")
+
+    # 2. Início do Formulário (Tudo deve estar indentado dentro do 'with')
     with st.form("form_cadastro_culundria", clear_on_submit=True):
         nome = st.text_input("Nome Completo")
         cpf_cad = st.text_input("CPF (apenas 11 números)")
@@ -417,12 +452,15 @@ elif aba == "Fazer Parte da Confraria":
         enviar = st.form_submit_button("CRIAR MINHA CONTA")
         
         if enviar:
+            # Limpeza básica do CPF
             cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
             
             if nome and len(cpf_limpo) == 11 and senha_cad:
                 try:
                     sh = client.open(NOME_PLANILHA)
                     sh_c = sh.worksheet("CLIENTES")
+                    
+                    # Verifica se já existe
                     cpfs_existentes = sh_c.col_values(1)
                     
                     if cpf_limpo in cpfs_existentes:
@@ -430,14 +468,23 @@ elif aba == "Fazer Parte da Confraria":
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
-                        # 1. CRIA O CLIENTE (Sua lógica original de 11 colunas)
+                        # 3. CRIA O NOVO CLIENTE (11 colunas conforme seu padrão A-K)
                         nova_linha = [
-                            cpf_limpo, nome.strip().upper(), whats.strip(), email.strip().lower(), 
-                            "Explorador", 100, 0, data_hoje, str(senha_cad).strip(), 0, 100
+                            cpf_limpo, 
+                            nome.strip().upper(), 
+                            whats.strip(), 
+                            email.strip().lower(), 
+                            "Explorador", 
+                            100, # Boas-vindas
+                            0, 
+                            data_hoje, 
+                            str(senha_cad).strip(), 
+                            0, 
+                            100 # Saldo inicial
                         ]
                         sh_c.append_row(nova_linha)
 
-                        # --- NOVO: SE HOUVER PADRINHO, REGISTRA NA ABA INDICAÇÕES ---
+                        # 4. REGISTRO NA ABA INDICAÇÕES (Se houver padrinho)
                         if padrinho_id:
                             try:
                                 sh_ind = sh.worksheet("INDICAÇÕES")
@@ -446,21 +493,22 @@ elif aba == "Fazer Parte da Confraria":
                                     nome.strip().upper(),
                                     whats.strip(),
                                     data_hoje,
-                                    "NÃO", # Começa como NÃO, o Mestre mudará para SIM na compra
+                                    "NÃO", 
                                     50,
                                     str(padrinho_id)
                                 ]
                                 sh_ind.append_row(nova_indicao)
                             except Exception as e_ind:
-                                print(f"Erro ao registrar na aba indicações: {e_ind}")
+                                # Erro na indicação não deve travar o cadastro principal
+                                st.warning("Cadastro feito, mas houve um erro no registro da indicação.")
 
-                        st.success(f"✅ Bem-vindo! Sua conta foi criada com 100 Goles.")
+                        st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada.")
                         st.balloons()
                         
                 except Exception as e:
-                    st.error(f"Erro ao acessar o banco de dados: {e}")
+                    st.error(f"Erro ao salvar: {e}")
             else:
-                st.warning("⚠️ Preencha Nome, CPF e Senha.")
+                st.warning("⚠️ Preencha Nome, CPF (11 dígitos) e Senha corretamente.")
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
