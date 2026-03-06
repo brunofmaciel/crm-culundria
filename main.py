@@ -50,7 +50,22 @@ def validar_e_pagar_indicacao(nome_cliente, whats_cliente):
                 aba_cli.update_cell(cel_p.row, 6, val_total + 50)
                 st.toast("🎁 Bônus de Indicação creditado ao Padrinho!")
     except: pass
-        
+
+# --- FUNÇÃO PARA LER QUALQUER ABA SEM ERROS DE COLUNA VAZIA ---
+def ler_planilha_sem_erro(aba):
+    try:
+        dados = aba.get_all_values()
+        if not dados:
+            return pd.DataFrame()
+        # Transforma em DataFrame usando a primeira linha como cabeçalho
+        df = pd.DataFrame(dados[1:], columns=dados[0])
+        # REMOVE colunas que não têm nome (as que causam o erro [''])
+        df = df.loc[:, df.columns != '']
+        return df
+    except Exception as e:
+        st.error(f"Erro ao processar dados da aba: {e}")
+        return pd.DataFrame()
+
 # --- ESTILO PREMIUM CULUNDRIA (ANTI-AZUL) ---
 st.markdown("""
     <style>
@@ -175,7 +190,7 @@ if aba == "Meu Painel":
             if btn_entrar:
                 try:
                     sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                    df_c = pd.DataFrame(sh_c.get_all_records())
+                    df_c = ler_planilha_sem_erro(sh_c)
                     
                     user = df_c[(df_c['ID_Cliente'].astype(str) == str(cpf_login)) & 
                                 (df_c['Senha'].astype(str) == str(senha_login))]
@@ -201,7 +216,7 @@ if aba == "Meu Painel":
                 with st.spinner("Sincronizando com o barril..."):
                     try:
                         sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-                        df_c = pd.DataFrame(sh_c.get_all_records())
+                        df_c = ler_planilha_sem_erro(sh_c)
                         
                         cpf_logado = st.session_state.dados_usuario['ID_Cliente']
                         user_atualizado = df_c[df_c['ID_Cliente'].astype(str).str.strip() == str(cpf_logado).strip()]
@@ -219,7 +234,7 @@ if aba == "Meu Painel":
             
             try:
                 sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-                df_v = pd.DataFrame(sh_v.get_all_records())
+                df_c = ler_planilha_sem_erro(sh_c)
                 df_v['ID_Cliente'] = df_v['ID_Cliente'].astype(str).str.strip()
                 meu_hist = df_v[df_v['ID_Cliente'] == str(u['ID_Cliente']).strip()].copy()
                 
@@ -342,7 +357,7 @@ elif aba == "Loja de Souvenirs":
         try:
             sh = client.open(NOME_PLANILHA)
             aba_p = sh.worksheet("PRODUTOS")
-            df_p = pd.DataFrame(aba_p.get_all_records())
+            df_c = ler_planilha_sem_erro(sh_c)
             # Filtra apenas ATIVO = SIM
             produtos = df_p[df_p['Ativo'] == "SIM"].to_dict('records')
         except Exception as e:
@@ -550,10 +565,10 @@ elif aba == "Área do Mestre":
         try:
             # Carregamento de Dados
             sh_v = client.open(NOME_PLANILHA).worksheet("VENDAS")
-            df_v = pd.DataFrame(sh_v.get_all_records())
+            df_c = ler_planilha_sem_erro(sh_c)
             
             sh_c = client.open(NOME_PLANILHA).worksheet("CLIENTES")
-            df_c = pd.DataFrame(sh_c.get_all_records())
+            df_c = ler_planilha_sem_erro(sh_c)
             
             # Limpeza e Conversão de Segurança
             df_v['Litragem_Total'] = pd.to_numeric(df_v['Litragem_Total'], errors='coerce').fillna(0)
