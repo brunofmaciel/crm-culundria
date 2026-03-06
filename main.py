@@ -10,6 +10,28 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAÇÃO DA PÁGINA (APENAS UMA VEZ E NO TOPO!)
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
+st.markdown(
+    """
+    <style>
+        /* Estiliza o container da Sidebar */
+        [data-testid="stSidebar"] {
+            background-color: #001f3f; /* Substitua pelo seu Azul (ex: Navy Blue) */
+            border-right: 3px solid #FFBF00; /* Borda fina no Âmbar */
+        }
+
+        /* Ajusta a cor dos textos para branco para contrastar com o azul */
+        [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] p {
+            color: white;
+        }
+
+        /* Ajusta o título e widgets dentro da sidebar se necessário */
+        [data-testid="stSidebarNav"] {
+            background-color: transparent;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+
 # 2. CAPTURA DO VOUCHER (Agora o Streamlit já está configurado)
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher", None)
