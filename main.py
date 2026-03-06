@@ -433,82 +433,82 @@ elif aba == "Fazer Parte da Confraria":
     st.title("🧪 Entre para a Confraria")
     st.write("Preencha seus dados para começar a acumular goles!")
     
-    # 1. Captura o padrinho da URL de forma persistente
-    # Usamos o st.query_params para ler ?ref=CPF
-    params = st.query_params
-    padrinho_id = params.get("ref", None)
+    # Captura o padrinho da URL (?ref=...)
+    padrinho_id = st.query_params.get("ref", None)
 
     if padrinho_id:
-        st.success(f"✨ **Indicação Detectada!** Você ganhará bônus ao entrar.")
+        st.info("✨ Indicação detectada! Bônus ativo para sua primeira compra.")
 
-    # 2. Início do Formulário (Tudo deve estar indentado dentro do 'with')
+    # O formulário deve conter TODA a lógica de salvamento dentro dele
     with st.form("form_cadastro_culundria", clear_on_submit=True):
-        nome = st.text_input("Nome Completo")
-        cpf_cad = st.text_input("CPF (apenas 11 números)")
-        whats = st.text_input("WhatsApp (com DDD)")
-        email = st.text_input("E-mail")
-        senha_cad = st.text_input("Crie uma Senha", type="password")
+        nome_input = st.text_input("Nome Completo")
+        cpf_input = st.text_input("CPF (apenas 11 números)")
+        whats_input = st.text_input("WhatsApp (com DDD)")
+        email_input = st.text_input("E-mail")
+        senha_input = st.text_input("Crie uma Senha", type="password")
         
         enviar = st.form_submit_button("CRIAR MINHA CONTA")
         
         if enviar:
-            # Limpeza básica do CPF
-            cpf_limpo = "".join(filter(str.isdigit, str(cpf_cad))).strip()
+            # 1. Limpeza e Validação
+            cpf_limpo = "".join(filter(str.isdigit, str(cpf_input))).strip()
             
-            if nome and len(cpf_limpo) == 11 and senha_cad:
+            if nome_input and len(cpf_limpo) == 11 and senha_input:
                 try:
+                    # 2. Conexão em tempo real
                     sh = client.open(NOME_PLANILHA)
                     sh_c = sh.worksheet("CLIENTES")
                     
-                    # Verifica se já existe
-                    cpfs_existentes = sh_c.col_values(1)
+                    # Verifica se o CPF já existe para evitar duplicados
+                    cpfs_na_planilha = sh_c.col_values(1)
                     
-                    if cpf_limpo in cpfs_existentes:
-                        st.error("🚫 Este CPF já é de um Confrade!")
+                    if cpf_limpo in cpfs_na_planilha:
+                        st.error("🚫 Este CPF já está cadastrado!")
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
-                        # 3. CRIA O NOVO CLIENTE (11 colunas conforme seu padrão A-K)
-                        nova_linha = [
+                        # 3. Montagem da Linha (A até K - 11 colunas)
+                        # ID, Nome, Whats, Email, Nível, Pts_T, Progr, Data, Senha, Gastos, Saldo
+                        nova_linha_cliente = [
                             cpf_limpo, 
-                            nome.strip().upper(), 
-                            whats.strip(), 
-                            email.strip().lower(), 
+                            nome_input.strip().upper(), 
+                            whats_input.strip(), 
+                            email_input.strip().lower(), 
                             "Explorador", 
-                            100, # Boas-vindas
+                            100, # Bônus de boas-vindas
                             0, 
                             data_hoje, 
-                            str(senha_cad).strip(), 
+                            str(senha_input).strip(), 
                             0, 
-                            100 # Saldo inicial
+                            100  # Saldo Inicial
                         ]
-                        sh_c.append_row(nova_linha)
+                        
+                        # ENVIO PARA A ABA CLIENTES
+                        sh_c.append_row(nova_linha_cliente)
 
-                        # 4. REGISTRO NA ABA INDICAÇÕES (Se houver padrinho)
+                        # 4. REGISTRO DE INDICAÇÃO (Se houver padrinho)
                         if padrinho_id:
                             try:
                                 sh_ind = sh.worksheet("INDICAÇÕES")
-                                # Colunas: Nome_Amigo, Telefone_Amigo, Data_Indicação, Venda_Concluída, Pontos_Gerados, ID_Padrinho
-                                nova_indicao = [
-                                    nome.strip().upper(),
-                                    whats.strip(),
+                                nova_linha_ind = [
+                                    nome_input.strip().upper(),
+                                    whats_input.strip(),
                                     data_hoje,
                                     "NÃO", 
                                     50,
                                     str(padrinho_id)
                                 ]
-                                sh_ind.append_row(nova_indicao)
-                            except Exception as e_ind:
-                                # Erro na indicação não deve travar o cadastro principal
-                                st.warning("Cadastro feito, mas houve um erro no registro da indicação.")
+                                sh_ind.append_row(nova_linha_ind)
+                            except:
+                                pass # Não trava o cadastro se a aba indicação falhar
 
-                        st.success(f"✅ Bem-vindo, {nome.split()[0]}! Sua conta foi criada.")
+                        st.success(f"✅ Bem-vindo, {nome_input.split()[0]}! Sua conta foi criada.")
                         st.balloons()
                         
                 except Exception as e:
-                    st.error(f"Erro ao salvar: {e}")
+                    st.error(f"Erro ao salvar na planilha: {e}")
             else:
-                st.warning("⚠️ Preencha Nome, CPF (11 dígitos) e Senha corretamente.")
+                st.warning("⚠️ Preencha Nome, CPF (11 dígitos) e Senha.")
 # ==========================================
 # ABA 4: AREA DO MESTRE
 # ==========================================
