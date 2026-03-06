@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import gspread
 import random
 import string
@@ -13,6 +14,19 @@ st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="c
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher", None)
 
+#  3. CONFIGURAÇÃO DO LOGO NA SIDEBAR ---
+with st.sidebar:
+    # Verifica se o arquivo existe na pasta raiz
+    if os.path.exists("logoculundria.png"):
+        # Criamos colunas para centralizar o logo
+        col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 4, 1])
+        with col_logo_2:
+            st.image("logoculundria.png", use_container_width=True)
+    else:
+        st.error("⚠️ Arquivo 'logoculundria.png' não encontrado na pasta do App.")
+    
+    st.markdown("<h3 style='text-align: center;'>Confraria Culundria</h3>", unsafe_allow_html=True)
+    st.write("---")
 # --- FUNÇÃO PARA GERAR CÓDIGO ÚNICO ---
 def gerar_codigo():
     return 'V-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
