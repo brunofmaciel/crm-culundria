@@ -33,6 +33,7 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
 # 2. CAPTURA DO VOUCHER (Agora o Streamlit já está configurado)
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher", None)
@@ -117,6 +118,26 @@ st.markdown("""
     .stTable { background-color: #161b3d; border-radius: 10px; color: white; }
     </style>
     """, unsafe_allow_html=True)
+
+
+# ajuste da imagem da loja
+/* Ajuste de Respiro para Imagens na Loja */
+[data-testid="stVerticalBlock"] img {
+    padding: 25px; /* Cria o espaço interno entre a imagem e a borda do card */
+    background-color: #161b3d; /* Garante que o fundo da imagem seja o azul do card */
+    border-left: 1px solid #e68a00; /* Mantém a linha lateral esquerda */
+    border-right: 1px solid #e68a00; /* Mantém a linha lateral direita */
+    box-sizing: border-box;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+}
+
+/* Remove o espaço em branco padrão que o Streamlit coloca entre os elementos */
+[data-testid="stVerticalBlock"] {
+    gap: 0rem !important;
+}
 
 # ==========================================
 # 2. CONEXÃO COM GOOGLE SHEETS
@@ -421,39 +442,35 @@ elif aba == "Loja de Souvenirs":
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
-                # TOPO DO CARD
+                # TOPO DO CARD (Cabeçalho)
                 st.markdown(f"""
                     <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
                         <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # ÁREA DA IMAGEM COM FUNDO AZUL E RESPIRO
-                # Criamos um container visual para a imagem não "vazar" o fundo
-                with st.container():
-                    # Aplicamos um fundo azul atrás da imagem para não quebrar o card
-                    st.markdown("<div style='background-color: #161b3d; border-left: 1px solid #e68a00; border-right: 1px solid #e68a00; padding: 10px;'>", unsafe_allow_html=True)
-                    
-                    if p['URL_Imagem']:
-                        try:
-                            # O TRUQUE: Criar sub-colunas para reduzir o tamanho da imagem (proporção 1:8:1)
-                            # Isso cria uma margem de segurança nas laterais
-                            c1, c2, c3 = st.columns([1, 8, 1])
-                            with c2:
-                                st.image(p['URL_Imagem'], use_container_width=True)
-                        except:
-                            st.warning(f"Erro ao carregar imagem")                    
-                    else:
-                        st.info("Foto em breve!")
-                    
-                    st.markdown("</div>", unsafe_allow_html=True)
+                # IMAGEM (O CSS acima cuidará do padding e das bordas laterais)
+                if p['URL_Imagem']:
+                    try:
+                        st.image(p['URL_Imagem'], use_container_width=True)
+                    except:
+                        st.markdown("<div style='background-color: #161b3d; border-left: 1px solid #e68a00; border-right: 1px solid #e68a00; padding: 20px; text-align: center;'>⚠️ Erro na imagem</div>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<div style='background-color: #161b3d; border-left: 1px solid #e68a00; border-right: 1px solid #e68a00; padding: 20px; text-align: center;'>📸 Foto em breve!</div>", unsafe_allow_html=True)
         
-                # RODAPÉ DO CARD
+                # RODAPÉ DO CARD (Preço)
                 st.markdown(f"""
                     <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
                         <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
                     </div>
                 """, unsafe_allow_html=True)
+                
+                        # RODAPÉ DO CARD
+                        st.markdown(f"""
+                            <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
+                                <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
+                            </div>
+                        """, unsafe_allow_html=True)
         
                                
                 # 4. BOTÃO DE RESGATE SEGURO
