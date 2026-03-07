@@ -446,13 +446,7 @@ elif aba == "Loja de Souvenirs":
                     
                     st.markdown("</div>", unsafe_allow_html=True)
         
-                # RODAPÉ DO CARD
-                st.markdown(f"""
-                    <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
-                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
-                    </div>
-                """, unsafe_allow_html=True)
-                
+                               
                 # 4. BOTÃO DE RESGATE SEGURO
                 if saldo_real >= float(p['Pontos']):
                     if st.button(f"RESGATAR {p['Nome'].upper()}", key=f"btn_res_{i}"):
