@@ -31,6 +31,17 @@ st.markdown("""
         left: 47px;
         top: 21px;
     }
+
+    
+    /* AJUSTE PARA AS IMAGENS DA LOJA (AQUI ESTÁ O SEGREDO) */
+    [data-testid="stVerticalBlock"] img {
+        padding: 25px !important; 
+        background-color: #161b3d !important;
+        border-left: 1px solid #e68a00 !important;
+        border-right: 1px solid #e68a00 !important;
+        box-sizing: border-box !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -120,24 +131,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# ajuste da imagem da loja
-/* Ajuste de Respiro para Imagens na Loja */
-[data-testid="stVerticalBlock"] img {
-    padding: 25px; /* Cria o espaço interno entre a imagem e a borda do card */
-    background-color: #161b3d; /* Garante que o fundo da imagem seja o azul do card */
-    border-left: 1px solid #e68a00; /* Mantém a linha lateral esquerda */
-    border-right: 1px solid #e68a00; /* Mantém a linha lateral direita */
-    box-sizing: border-box;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 100%;
-}
-
-/* Remove o espaço em branco padrão que o Streamlit coloca entre os elementos */
-[data-testid="stVerticalBlock"] {
-    gap: 0rem !important;
-}
 
 # ==========================================
 # 2. CONEXÃO COM GOOGLE SHEETS
