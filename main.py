@@ -29,7 +29,7 @@ st.markdown("""
         font-size: 12px;
         position: absolute;
         left: 47px;
-        top: 22px;
+        top: 21px;
     }
     </style>
     """, unsafe_allow_html=True)
