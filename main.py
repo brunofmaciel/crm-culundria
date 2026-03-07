@@ -415,29 +415,43 @@ elif aba == "Loja de Souvenirs":
         except Exception as e:
             st.error(f"Erro ao carregar catálogo: {e}")
             st.stop()
-        # 3. EXIBIÇÃO DOS PRODUTOS
-        cols = st.columns(2)
-        for i, p in enumerate(produtos):
-            with cols[i % 2]:
-                st.markdown(f"""
-                    <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
-                        <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                if p['URL_Imagem']:
-                    try:
+       # 3. EXIBIÇÃO DOS PRODUTOS
+cols = st.columns(2)
+for i, p in enumerate(produtos):
+    with cols[i % 2]:
+        # TOPO DO CARD
+        st.markdown(f"""
+            <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
+                <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # ÁREA DA IMAGEM COM FUNDO AZUL E RESPIRO
+        # Criamos um container visual para a imagem não "vazar" o fundo
+        with st.container():
+            # Aplicamos um fundo azul atrás da imagem para não quebrar o card
+            st.markdown("<div style='background-color: #161b3d; border-left: 1px solid #e68a00; border-right: 1px solid #e68a00; padding: 10px;'>", unsafe_allow_html=True)
+            
+            if p['URL_Imagem']:
+                try:
+                    # O TRUQUE: Criar sub-colunas para reduzir o tamanho da imagem (proporção 1:8:1)
+                    # Isso cria uma margem de segurança nas laterais
+                    c1, c2, c3 = st.columns([1, 8, 1])
+                    with c2:
                         st.image(p['URL_Imagem'], use_container_width=True)
-                    except:
-                        st.warning(f"Erro ao carregar imagem: {p['nome']}")                    
-                else:
-                    st.info("Foto em breve!")
+                except:
+                    st.warning(f"Erro ao carregar imagem")                    
+            else:
+                st.info("Foto em breve!")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
-                st.markdown(f"""
-                    <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
-                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
-                    </div>
-                """, unsafe_allow_html=True)
+        # RODAPÉ DO CARD
+        st.markdown(f"""
+            <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
+                <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
+            </div>
+        """, unsafe_allow_html=True)
                 
                 # 4. BOTÃO DE RESGATE SEGURO
                 if saldo_real >= float(p['Pontos']):
