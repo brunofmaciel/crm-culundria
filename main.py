@@ -415,7 +415,9 @@ elif aba == "Loja de Souvenirs":
         except Exception as e:
             st.error(f"Erro ao carregar catálogo: {e}")
             st.stop()
-       # 3. EXIBIÇÃO DOS PRODUTOS
+     
+
+        # 3. EXIBIÇÃO DOS PRODUTOS
         cols = st.columns(2)
         for i, p in enumerate(produtos):
             with cols[i % 2]:
@@ -445,6 +447,13 @@ elif aba == "Loja de Souvenirs":
                         st.info("Foto em breve!")
                     
                     st.markdown("</div>", unsafe_allow_html=True)
+        
+                # RODAPÉ DO CARD
+                st.markdown(f"""
+                    <div style='background-color: #161b3d; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #e68a00; border-top: none; margin-bottom: 20px; text-align: center;'>
+                        <p style='color: #ffffff; font-size: 1.2em; font-weight: bold;'>{p['Pontos']} GOLES</p>
+                    </div>
+                """, unsafe_allow_html=True)
         
                                
                 # 4. BOTÃO DE RESGATE SEGURO
