@@ -23,13 +23,13 @@ st.markdown("""
     
     /* Adiciona um texto "MENU" ao lado do ícone (Truque de mestre) */
     header[data-testid="stHeader"]::before {
-        content: 'MENU CLIQUE AQUI ⬅️';
+        content: '⬅️ << MENU CLIQUE AQUI';
         color: #e68a00;
         font-weight: bold;
         font-size: 12px;
         position: absolute;
         left: 60px;
-        top: 15px;
+        top: 30px;
     }
     </style>
     """, unsafe_allow_html=True)
