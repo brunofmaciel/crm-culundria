@@ -28,8 +28,8 @@ st.markdown("""
         font-weight: bold;
         font-size: 12px;
         position: absolute;
-        left: 50px;
-        top: 23px;
+        left: 47px;
+        top: 22px;
     }
     </style>
     """, unsafe_allow_html=True)
