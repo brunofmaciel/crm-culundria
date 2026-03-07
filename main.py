@@ -437,7 +437,7 @@ elif aba == "Loja de Souvenirs":
             with cols[i % 2]:
                 # TOPO DO CARD (Cabeçalho)
                 st.markdown(f"""
-                    <div style='background-color: #161b3d; padding: 25px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
+                    <div style='background-color: #161b3d; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #e68a00; border-bottom: none; text-align: center;'>
                         <h3 style='margin:0; color: #e68a00;'>{p['Emoji']} {p['Nome']}</h3>
                     </div>
                 """, unsafe_allow_html=True)
