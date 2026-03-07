@@ -10,7 +10,29 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAÇÃO DA PÁGINA (APENAS UMA VEZ E NO TOPO!)
 st.set_page_config(page_title="Culundria Confraria", page_icon="🍺", layout="centered")
 
-
+st.markdown("""
+    <style>
+    /* Destaca o ícone do menu (hambúrguer) no topo */
+    button[kind="headerNoContext"] {
+        background-color: #e68a00 !important; /* Cor Âmbar */
+        color: white !important;
+        border-radius: 50% !important;
+        padding: 5px !important;
+        box-shadow: 0px 0px 15px rgba(230, 138, 0, 0.7); /* Brilho neon */
+    }
+    
+    /* Adiciona um texto "MENU" ao lado do ícone (Truque de mestre) */
+    header[data-testid="stHeader"]::before {
+        content: 'MENU CLIQUE AQUI ⬅️';
+        color: #e68a00;
+        font-weight: bold;
+        font-size: 12px;
+        position: absolute;
+        left: 60px;
+        top: 15px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 # 2. CAPTURA DO VOUCHER (Agora o Streamlit já está configurado)
 query_params = st.query_params
 voucher_detectado = query_params.get("voucher", None)
