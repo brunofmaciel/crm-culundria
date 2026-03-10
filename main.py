@@ -366,32 +366,57 @@ if aba == "Meu Painel":
                 </a>
             """, unsafe_allow_html=True)
 
-            # --- 4. HISTÓRICO DE BARRIS ---
+            # --- 4. HISTÓRICO DE BARRIS (ESTILO PREMIUM) ---
             st.write("---")
-            st.subheader("🛢️ Histórico de Consumo")
+            st.subheader("📜 Seu Histórico de Confrade")
             
             if not meu_hist.empty:
-                # Limpa nomes de colunas para exibição
+                # 1. Padroniza nomes das colunas originais
                 meu_hist.columns = [str(c).strip() for c in meu_hist.columns]
                 
-                # Lista de colunas que você quer mostrar (ajuste conforme os nomes exatos na sua planilha)
-                col_des = ['Data_Venda', 'Estilo_Chopp', 'Litragem_Total', 'Total_Pontos'] 
+                # 2. Define as colunas que queremos e como elas vão se chamar (Premium)
+                # Importante: Verifique se na sua planilha é 'Total_Pontos' ou 'Goles_Acumulados'
+                mapeamento_colunas = {
+                    'Data_Venda': '📅 DATA',
+                    'Estilo_Chopp': '🍺 EXPERIÊNCIA',
+                    'Litragem_Total': '📏 QTD / LITROS',
+                    'Total_Pontos': '🏆 GOLES GANHOS'
+                }
                 
-                # Verifica quais dessas colunas realmente existem na aba VENDAS
-                col_exis = [c for c in col_des if c in meu_hist.columns]
+                # 3. Verifica quais colunas existem e filtra
+                col_exis = [c for c in mapeamento_colunas.keys() if c in meu_hist.columns]
                 
                 if col_exis:
+                    # Criamos o DataFrame de exibição
                     exibir = meu_hist[col_exis].copy()
-                    # Formata a data para ficar bonita (Dia/Mês/Ano)
+                    
+                    # 4. Formatação Premium de Dados
+                    # Data formatada para o padrão BR
                     exibir['Data_Venda'] = exibir['Data_Venda'].dt.strftime('%d/%m/%Y')
-                    st.dataframe(exibir, use_container_width=True, hide_index=True)
+                    
+                    # Deixa o nome do produto em CAIXA ALTA para destacar
+                    exibir['Estilo_Chopp'] = exibir['Estilo_Chopp'].str.upper()
+                    
+                    # Renomeia as colunas para o nome amigável
+                    exibir = exibir.rename(columns=mapeamento_colunas)
+                    
+                    # 5. Exibição com Estilo
+                    # O use_container_width garante que ocupe a tela toda
+                    st.dataframe(
+                        exibir, 
+                        use_container_width=True, 
+                        hide_index=True
+                    )
             else:
                 st.info("Nenhum consumo registrado ainda. Que tal uma Culundria hoje? 🍺")
-                                
-            if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True):
+            
+            # --- BOTÃO DE SAIR ---
+            st.write("") # Espaçamento extra
+            if st.button("🚪 SAIR DA CONFRARIA", use_container_width=True, type="secondary"):
                 st.session_state.logado = False
                 st.session_state.dados_usuario = None
                 st.rerun()
+  
 # ==========================================
 # ABA 2: LOJA DE SOUVENIRS (DINÂMICA)
 # ==========================================
