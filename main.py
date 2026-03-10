@@ -567,7 +567,7 @@ elif aba == "Fazer Parte da Confraria":
                                     whats.strip(),
                                     data_hoje,
                                     "NÃO", 
-                                    50,
+                                    "",
                                     str(padrinho_id),
                                 ]
                                 sh_ind.append_row(nova_indicao)
