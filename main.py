@@ -540,19 +540,18 @@ elif aba == "Fazer Parte da Confraria":
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
-                        # 3. CRIA O NOVO CLIENTE (11 colunas conforme seu padrão A-K)
-                        nova_linha = [
-                            cpf_limpo, 
-                            nome.strip().upper(), 
-                            whats.strip(), 
-                            email.strip().lower(), 
-                            "Explorador", 
-                            "", # Boas-vindas
-                            0, 
-                            data_hoje, 
-                            str(senha_cad).strip(), 
-                            0, 
-                            100 # Saldo inicial
+                       nova_linha = [
+                           cpf_limpo,              # Coluna A (ID/CPF) -> O gatilho da fórmula!
+                           nome.strip().upper(),   # Coluna B (Nome)
+                           whats.strip(),          # Coluna C (WhatsApp)
+                           email.strip().lower(),  # Coluna D (E-mail)
+                           "Explorador",           # Coluna E (Nível)
+                           "",                     # Coluna F (PONTOS) -> Deixe Vazio para a ARRAYFORMULA agir
+                           "",                     # Coluna G (PROGRESSO COPO) -> Deixe Vazio
+                           data_hoje,              # Coluna H (Data)
+                           str(senha_cad).strip(), # Coluna I (Senha)
+                           "",                     # Coluna J (RESGATES) -> Deixe Vazio
+                           ""                      # Coluna K (SALDO ATUAL) -> Deixe Vazio
                         ]
                         sh_c.append_row(nova_linha)
 
@@ -567,7 +566,7 @@ elif aba == "Fazer Parte da Confraria":
                                     whats.strip(),
                                     data_hoje,
                                     "NÃO", 
-                                    "",
+                                    50,
                                     str(padrinho_id),
                                 ]
                                 sh_ind.append_row(nova_indicao)
