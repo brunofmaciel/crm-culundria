@@ -380,7 +380,7 @@ if aba == "Meu Painel":
                     'Data_Venda': '📅 DATA',
                     'Estilo_Chopp': '🍺 EXPERIÊNCIA',
                     'Litragem_Total': '📏 QTD / LITROS',
-                    'Total_Pontos': '🏆 GOLES GANHOS'
+                    'Goles_Acumulados': '🏆 GOLES GANHOS'
                 }
                 
                 # 3. Verifica quais colunas existem e filtra
