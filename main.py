@@ -547,7 +547,7 @@ elif aba == "Fazer Parte da Confraria":
                             whats.strip(), 
                             email.strip().lower(), 
                             "Explorador", 
-                            100, # Boas-vindas
+                            "", # Boas-vindas
                             0, 
                             data_hoje, 
                             str(senha_cad).strip(), 
