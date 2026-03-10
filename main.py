@@ -540,18 +540,19 @@ elif aba == "Fazer Parte da Confraria":
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
+                       # 3. CRIA O NOVO CLIENTE (Mantendo o padrão A-K, mas respeitando as matrizes)
                         nova_linha = [
-                            cpf_limpo, 
-                            nome.strip().upper(), 
-                            whats.strip(), 
-                            email.strip().lower(), 
-                            "Explorador", 
-                            150, # Boas-vindas (Coluna F)
-                            0,   # Progresso (Coluna G)
-                            data_hoje, 
-                            str(senha_cad).strip(), 
-                            0,   # Resgates (Coluna J)
-                            150  # Saldo Inicial (Coluna K) - Mudei para 150 para bater com o bônus
+                            cpf_limpo,              # Coluna A (Gatilho da Matriz)
+                            nome.strip().upper(),   # Coluna B
+                            whats.strip(),          # Coluna C
+                            email.strip().lower(),  # Coluna D
+                            "Explorador",           # Coluna E
+                            None,                   # Coluna F (PONTOS) -> Enviar vazio para NÃO dar erro na F2
+                            None,                   # Coluna G (PROGRESSO) -> Enviar vazio
+                            data_hoje,              # Coluna H
+                            str(senha_cad).strip(), # Coluna I
+                            None,                   # Coluna J (RESGATES) -> Enviar vazio
+                            None                    # Coluna K (SALDO) -> Enviar vazio
                         ]
                         sh_c.append_row(nova_linha)
 
