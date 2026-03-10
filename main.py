@@ -692,22 +692,48 @@ elif aba == "Área do Mestre":
                         else:
                             st.error("❓ Código não encontrado.")
 
-            # --- ABA 2: RELATÓRIOS ---
+                        # --- ABA 2: RELATÓRIOS (RESUMO DA BRASSAGEM) ---
             with tab_relatorios:
                 st.subheader("📊 Resumo da Brassagem")
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Litragem Total", f"{df_v['Litragem_Total'].sum():.1f} L")
-                c2.metric("Confrades", len(df_c))
-                if 'Saldo_Atual' in df_c.columns:
-                    c3.metric("Pontos p/ Troca", int(df_c['Saldo_Atual'].sum()))
                 
-                col_estilo = 'Estilo Chopp' if 'Estilo Chopp' in df_v.columns else 'Estilo_Chopp'
-                if col_estilo in df_v.columns:
+                # 1. Limpeza e Padronização de Colunas
+                df_v.columns = [str(c).strip() for c in df_v.columns]
+                df_c.columns = [str(c).strip() for c in df_c.columns]
+            
+                # 2. Identificação Dinâmica de Colunas (Evita erros de nome)
+                col_litros = 'Litragem_Total' if 'Litragem_Total' in df_v.columns else 'LITRAGEM TOTAL'
+                col_saldo = 'Saldo_Atual' if 'Saldo_Atual' in df_c.columns else 'SALDO ATUAL'
+                col_estilo = 'Estilo_Chopp' if 'Estilo_Chopp' in df_v.columns else 'ESTILO CHOPP'
+            
+                # 3. Métricas Principais (Os Cards do topo)
+                c1, c2, c3 = st.columns(3)
+                
+                # Litragem (converte para número para somar)
+                litros_totais = pd.to_numeric(df_v[col_litros], errors='coerce').sum() if col_litros in df_v.columns else 0
+                c1.metric("Litragem Total", f"{litros_totais:.1f} L")
+                
+                # Total de Confrades
+                c2.metric("Confrades", len(df_c))
+                
+                # Pontos para Troca
+                pontos_totais = pd.to_numeric(df_c[col_saldo], errors='coerce').sum() if col_saldo in df_c.columns else 0
+                c3.metric("Pontos p/ Troca", f"{int(pontos_totais)}")
+            
+                # 4. Gráfico de Estilos (Onde estava o problema)
+                if col_estilo in df_v.columns and col_litros in df_v.columns:
                     st.write("---")
-                    st.subheader("🍺 Estilos mais pedidos")
-                    chart_data = df_v.groupby(col_estilo)['Litragem_Total'].sum()
+                    st.subheader("🍺 Estilos mais pedidos (Litragem)")
+                    
+                    # Garante que os litros sejam números antes de agrupar
+                    df_v[col_litros] = pd.to_numeric(df_v[col_litros], errors='coerce').fillna(0)
+                    
+                    # Agrupa e soma
+                    chart_data = df_v.groupby(col_estilo)[col_litros].sum().sort_values(ascending=False)
+                    
+                    # Exibe o gráfico de barras
                     st.bar_chart(chart_data)
-
+                else:
+                    st.warning(f"Não foi possível gerar o gráfico. Verifique se as colunas '{col_estilo}' e '{col_litros}' existem.")
             # --- ABA 3: RANKING ---
             with tab_ranking:
                 st.subheader("🏆 Top Confrades")
