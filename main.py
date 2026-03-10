@@ -694,7 +694,7 @@ elif aba == "Área do Mestre":
 
                         # --- ABA 2: RELATÓRIOS (RESUMO DA BRASSAGEM) ---
             with tab_relatorios:
-                st.subheader("📊 Resumo da Brassagem")
+                st.subheader("📊 Resumo das Vendas")
                 
                 # 1. Limpeza e Padronização de Colunas
                 df_v.columns = [str(c).strip() for c in df_v.columns]
@@ -709,7 +709,8 @@ elif aba == "Área do Mestre":
                 c1, c2, c3 = st.columns(3)
                 
                 # Litragem (converte para número para somar)
-                litros_totais = pd.to_numeric(df_v[col_litros], errors='coerce').sum() if col_litros in df_v.columns else 0
+                litros_limpos = pd.to_numeric(df_v['Litragem_Total'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
+                total_litros = litros_limpos.sum()
                 c1.metric("Litragem Total", f"{litros_totais:.1f} L")
                 
                 # Total de Confrades
