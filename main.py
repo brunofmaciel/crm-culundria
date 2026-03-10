@@ -540,18 +540,18 @@ elif aba == "Fazer Parte da Confraria":
                     else:
                         data_hoje = pd.Timestamp.now().strftime("%d/%m/%Y")
                         
-                       nova_linha = [
-                           cpf_limpo,              # Coluna A (ID/CPF) -> O gatilho da fórmula!
-                           nome.strip().upper(),   # Coluna B (Nome)
-                           whats.strip(),          # Coluna C (WhatsApp)
-                           email.strip().lower(),  # Coluna D (E-mail)
-                           "Explorador",           # Coluna E (Nível)
-                           "",                     # Coluna F (PONTOS) -> Deixe Vazio para a ARRAYFORMULA agir
-                           "",                     # Coluna G (PROGRESSO COPO) -> Deixe Vazio
-                           data_hoje,              # Coluna H (Data)
-                           str(senha_cad).strip(), # Coluna I (Senha)
-                           "",                     # Coluna J (RESGATES) -> Deixe Vazio
-                           ""                      # Coluna K (SALDO ATUAL) -> Deixe Vazio
+                        nova_linha = [
+                            cpf_limpo,              # Coluna A (ID/CPF) -> O gatilho da fórmula!
+                            nome.strip().upper(),   # Coluna B (Nome)
+                            whats.strip(),          # Coluna C (WhatsApp)
+                            email.strip().lower(),  # Coluna D (E-mail)
+                            "Explorador",           # Coluna E (Nível)
+                            "",                     # Coluna F (PONTOS) -> Deixe Vazio para a ARRAYFORMULA agir
+                            "",                     # Coluna G (PROGRESSO COPO) -> Deixe Vazio
+                            data_hoje,              # Coluna H (Data)
+                            str(senha_cad).strip(), # Coluna I (Senha)
+                            "",                     # Coluna J (RESGATES) -> Deixe Vazio
+                            ""                      # Coluna K (SALDO ATUAL) -> Deixe Vazio
                         ]
                         sh_c.append_row(nova_linha)
 
